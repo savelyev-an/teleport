@@ -4304,18 +4304,6 @@ func findActiveDatabases(key *Key) ([]tlsca.RouteToDatabase, error) {
 	return databases, nil
 }
 
-// GetActiveSessions fetches a list of all active sessions tracked by the SessionTracker resource
-// that the user has access to.
-func (tc *TeleportClient) GetActiveSessions(ctx context.Context) ([]types.SessionTracker, error) {
-	proxy, err := tc.ConnectToProxy(ctx)
-	if err != nil {
-		return nil, trace.Wrap(err)
-	}
-
-	defer proxy.Close()
-	return proxy.GetActiveSessions(ctx)
-}
-
 // SearchSessionEvents allows searching for session events with a full pagination support.
 func (tc *TeleportClient) SearchSessionEvents(ctx context.Context, fromUTC time.Time, toUTC time.Time, limit int, order types.EventOrder, startKey string) ([]apievents.AuditEvent, string, error) {
 	proxyClient, err := tc.ConnectToProxy(ctx)
@@ -4331,5 +4319,6 @@ func (tc *TeleportClient) SearchSessionEvents(ctx context.Context, fromUTC time.
 	if err != nil {
 		return nil, "", trace.Wrap(err)
 	}
+
 	return decodedEvents, lastKey, nil
 }
