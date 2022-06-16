@@ -2243,7 +2243,7 @@ func (process *TeleportProcess) initSSH() error {
 			return trace.Wrap(err)
 		}
 
-		storagePresence := local.NewPresenceService(process.storage)
+		storagePresence := local.NewPresenceService(process.storage.BackendStorage)
 
 		s, err = regular.New(cfg.SSH.Addr,
 			cfg.Hostname,
