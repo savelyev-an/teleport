@@ -357,6 +357,34 @@ See [this link for information on Community Docker image versions](../../setup/g
   </TabItem>
 </Tabs>
 
+## `caPin`
+
+| Type | Default value |
+| - | - |
+| `string` | `""` |
+
+When `caPin` is set, the teleport agent will use its value to check the
+Auth server identity during the initial join. This enables a more secure
+way of adding new nodes to a cluster. See
+["Adding Nodes to the Cluster"](https://goteleport.com/docs/admin-guide/#adding-nodes-to-the-cluster).
+
+This value can contain the pin itself (recommended, works out of the box),
+or a path to a file containing the pin. For the latter it is your
+responsibility to mount the file, using [extraVolumes](#extraVolumes).
+
+<Tabs>
+  <TabItem label="values.yaml">
+  ```yaml
+  caPin: "sha256:7e12c17c20d9cb504bbcb3f0236be3f446861f1396dcbb44425fe28ec1c108f1"
+  ```
+  </TabItem>
+  <TabItem label="--set">
+  ```code
+  $ --set caPin="sha256:7e12c17c20d9cb504bbcb3f0236be3f446861f1396dcbb44425fe28ec1c108f1"
+  ```
+  </TabItem>
+</Tabs>
+
 ## `insecureSkipProxyTLSVerify`
 
 | Type | Default value |
