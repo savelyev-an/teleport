@@ -23,10 +23,6 @@
             {
               "title": "Docker Compose",
               "slug": "/getting-started/docker-compose/"
-            },
-            {
-              "title": "DigitalOcean",
-              "slug": "/getting-started/digitalocean/"
             }
           ]
         },
@@ -101,6 +97,10 @@
             {
               "title": "IBM",
               "slug": "/setup/deployments/ibm/"
+            },
+            {
+              "title": "Digital Ocean",
+              "slug": "/setup/deployments/digitalocean/"
             }
           ]
         },
@@ -1186,6 +1186,11 @@
     {
       "source": "/application-access/guides/jwt/",
       "destination": "/application-access/jwt/",
+      "permanent": true
+    },
+    {
+      "source": "/getting-started/digitalocean/",
+      "destination": "/setup/deployments/digitalocean/",
       "permanent": true
     }
   ]
