@@ -496,6 +496,24 @@
           ]
         },
         {
+          "title": "Helm Chart Reference",
+          "slug": "/kubernetes-access/helm/reference/",
+          "entries": [
+            {
+              "title": "teleport-cluster",
+              "slug": "/kubernetes-access/helm/reference/teleport-cluster/"
+            },
+            {
+              "title": "teleport-kube-agent",
+              "slug": "/kubernetes-access/helm/reference/teleport-kube-agent/"
+            },
+            {
+              "title": "teleport-plugin-mattermost",
+              "slug": "/kubernetes-access/helm/reference/teleport-plugin-mattermost/"
+            }
+          ]
+        },
+        {
           "title": "Access Controls",
           "slug": "/kubernetes-access/controls/"
         }
