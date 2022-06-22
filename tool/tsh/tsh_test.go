@@ -2696,7 +2696,8 @@ func TestExportingTraces(t *testing.T) {
 			tt.spanAssertion(t, collector.Spans())
 		})
 	}
-=======
+}
+
 func TestShowSessions(t *testing.T) {
 	expected := `[
     {
@@ -2730,8 +2731,7 @@ func TestShowSessions(t *testing.T) {
         "session_stop": "0001-01-01T00:00:00Z"
     }
 ]`
-	var sessions []events.AuditEvent
-	sessions = []events.AuditEvent{
+	sessions := []events.AuditEvent{
 		&events.SessionEnd{
 			Metadata: events.Metadata{
 				ID: "someID1",
