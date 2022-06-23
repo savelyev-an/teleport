@@ -316,7 +316,8 @@ matches snapshot for ca-pin.yaml:
         teleport:
           auth_token: "/etc/teleport-secrets/auth-token"
           auth_servers: ["proxy.example.com:3080"]
-          ca_pin: sha256:7e12c17c20d9cb504bbcb3f0236be3f446861f1396dcbb44425fe28ec1c108f1
+          ca_pin:
+            - sha256:7e12c17c20d9cb504bbcb3f0236be3f446861f1396dcbb44425fe28ec1c108f1
           log:
             severity: INFO
             output: stderr

@@ -113,8 +113,11 @@
         },
         "caPin": {
             "$id": "#/properties/caPin",
-            "type": "string",
-            "default": ""
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "default": []
         },
         "insecureSkipProxyTLSVerify": {
             "$id": "#/properties/insecureSkipProxyTLSVerify",
