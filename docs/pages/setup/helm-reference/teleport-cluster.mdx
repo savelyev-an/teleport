@@ -69,7 +69,7 @@ This reference details available values for the `teleport-cluster` chart.
 | - | - | - | - | - |
 | `string` | `local` | Yes | `auth_service.authentication.type` | ❌ |
 
-`authenticationType` controls the authentication scheme used by Teleport. Possible values are `local` and `github` for OSS, plus `oidc`, `saml`, and `false` for Enterprise.
+`authenticationType` controls the authentication scheme used by Teleport. Possible values are `local` and `github` for OSS, plus `oidc`, `saml` for Enterprise.
 
 ## `authenticationSecondFactor`
 
@@ -112,6 +112,17 @@ By default all devices are allowed.
 This field allows you to forbid specific device models and vendors, while allowing all others (provided they clear attestation_allowed_cas as well).
 Devices within this list will be rejected during registration.
 By default no devices are forbidden.
+
+## `disableLocalAuthentication`
+
+| Type | Default value | Required? | `teleport.yaml` equivalent | Can be used in `custom` mode? |
+| - | - | - | - | - |
+| `bool` | `false` | No | The inverse of `auth_service.authentication.local_auth` | ❌ |
+
+`disableLocalAuthentication` sets `auth_service.authentication.local_auth` to `false`.
+Users can only login through non-local auth like `saml`, `oidc` or `github`.
+
+[This is required for FedRAMP / FIPS](../../../enterprise/ssh-kubernetes-fedramp.mdx).
 
 ## `proxyListenerMode`
 

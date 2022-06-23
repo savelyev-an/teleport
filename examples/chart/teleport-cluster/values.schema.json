@@ -64,6 +64,11 @@
                 }
             }
         },
+        "disableLocalAuthentication": {
+            "$id": "#/properties/disableLocalAuthentication",
+            "type": "boolean",
+            "default": false
+        },
         "proxyListenerMode": {
             "$id": "#/properties/proxyListenerMode",
             "type": "string",

@@ -19,11 +19,14 @@ kubeClusterName: ""
 teleportVersionOverride: ""
 
 # Default authentication type. Possible values are 'local' and 'github' for OSS, plus 'oidc' and 'saml' for Enterprise.
-# 'false' is required for FedRAMP / FIPS; see https://gravitational.com/teleport/docs/enterprise/ssh-kubernetes-fedramp/
 authenticationType: local
 
 authenticationSecondFactor:
   secondFactor: "otp"
+
+# Disable local authentication by setting `authentication.local_auth=false` in `teleport.yaml`.
+# This is required for FedRAMP / FIPS; see https://gravitational.com/teleport/docs/enterprise/ssh-kubernetes-fedramp/
+disableLocalAuthentication: false
 
 # Teleport supports TLS routing. In this mode, all client connections are wrapped in TLS and multiplexed on one Teleport proxy port.
 # Default mode will not utilize TLS routing and operate in backwards-compatibility mode.

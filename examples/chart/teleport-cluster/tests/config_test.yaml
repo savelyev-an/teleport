@@ -122,6 +122,16 @@ tests:
       - hasDocuments:
           count: 0
 
+  - it: matches snapshot for disable-local-authentication.yaml
+    values:
+      - ../.lint/disable-local-authentication.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchSnapshot: {}
+
   - it: matches snapshot for existing-tls-secret.yaml
     values:
       - ../.lint/existing-tls-secret.yaml
