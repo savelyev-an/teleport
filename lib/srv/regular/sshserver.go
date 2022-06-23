@@ -52,6 +52,8 @@ import (
 	"github.com/gravitational/teleport/lib/services/local"
 	rsession "github.com/gravitational/teleport/lib/session"
 	"github.com/gravitational/teleport/lib/srv"
+	"github.com/gravitational/teleport/lib/srv/db/common"
+	"github.com/gravitational/teleport/lib/srv/server"
 	"github.com/gravitational/teleport/lib/sshutils"
 	"github.com/gravitational/teleport/lib/sshutils/x11"
 	"github.com/gravitational/teleport/lib/teleagent"
@@ -214,8 +216,14 @@ type Server struct {
 
 	// users is used to start the automatic user deletion loop
 	users srv.HostUsers
+
+	// cloudWatcher periodically retrieves cloud resources, currently
+	// only EC2
+	cloudWatcher *server.Watcher
 	// awsMatchers are used to match EC2 instances
 	awsMatchers []services.AWSMatcher
+	// cloudClients are clients used for fetching cloud resources
+	cloudClients common.CloudClients
 }
 
 // GetClock returns server clock implementation
@@ -783,6 +791,14 @@ func New(addr utils.NetAddr,
 	// common term handlers
 	s.termHandlers = &srv.TermHandlers{
 		SessionRegistry: s.reg,
+	}
+
+	if len(s.awsMatchers) != 0 {
+		s.cloudClients = common.NewCloudClients()
+		s.cloudWatcher, err = server.NewCloudServerWatcher(s.ctx, s.awsMatchers, s.cloudClients)
+		if err != nil {
+			return nil, trace.Wrap(err)
+		}
 	}
 
 	server, err := sshutils.NewServer(
