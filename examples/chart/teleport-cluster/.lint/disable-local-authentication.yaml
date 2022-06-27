@@ -1,3 +1,4 @@
 clusterName: helm-lint
-authenticationType: github
-disableLocalAuthentication: true
+authentication:
+  type: github
+  localAuth: false

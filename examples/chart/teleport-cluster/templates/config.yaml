@@ -55,10 +55,8 @@ data:
       license_file: '/var/lib/license/license.pem'
   {{- end }}
       authentication:
-        type: {{ required "authenticationType is required in chart values" .Values.authenticationType }}
-        {{- if .Values.disableLocalAuthentication }}
-        local_auth: false
-        {{- end }}
+        type: {{ required "authentication.type is required in chart values" (coalesce .Values.authenticationType .Values.authentication.type) }}
+        local_auth: {{ .Values.authentication.localAuth }}
   {{- if .Values.authenticationSecondFactor }}
     {{- if .Values.authenticationSecondFactor.secondFactor }}
         second_factor: {{ .Values.authenticationSecondFactor.secondFactor }}

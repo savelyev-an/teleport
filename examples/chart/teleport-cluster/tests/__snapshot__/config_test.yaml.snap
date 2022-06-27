@@ -15,6 +15,7 @@ matches snapshot and tests for annotations.yaml:
           cluster_name: helm-lint
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -51,6 +52,7 @@ matches snapshot for acme-off.yaml:
           cluster_name: test-cluster-name
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -84,6 +86,7 @@ matches snapshot for acme-on.yaml:
           cluster_name: test-acme-cluster
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -120,6 +123,7 @@ matches snapshot for acme-uri-staging.yaml:
           cluster_name: test-acme-cluster
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -163,6 +167,7 @@ matches snapshot for affinity.yaml:
           cluster_name: test-gcp-cluster
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -203,6 +208,7 @@ matches snapshot for aws-ha-acme.yaml:
           cluster_name: test-aws-cluster
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -248,6 +254,7 @@ matches snapshot for aws-ha-antiaffinity.yaml:
           cluster_name: test-aws-cluster
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -290,6 +297,7 @@ matches snapshot for aws-ha-log.yaml:
           cluster_name: test-aws-cluster
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -335,6 +343,7 @@ matches snapshot for aws-ha.yaml:
           cluster_name: test-aws-cluster
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -377,6 +386,7 @@ matches snapshot for aws.yaml:
           cluster_name: test-aws-cluster
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -449,6 +459,7 @@ matches snapshot for existing-tls-secret-with-ca.yaml:
           cluster_name: test-cluster-name
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -485,6 +496,7 @@ matches snapshot for existing-tls-secret.yaml:
           cluster_name: test-cluster-name
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -528,6 +540,7 @@ matches snapshot for gcp-ha-acme.yaml:
           cluster_name: test-gcp-cluster
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -573,6 +586,7 @@ matches snapshot for gcp-ha-antiaffinity.yaml:
           cluster_name: test-gcp-cluster
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -615,6 +629,7 @@ matches snapshot for gcp-ha-log.yaml:
           cluster_name: test-gcp-cluster
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -660,6 +675,7 @@ matches snapshot for gcp.yaml:
           cluster_name: test-gcp-cluster
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -698,6 +714,7 @@ matches snapshot for initcontainers.yaml:
           cluster_name: helm-lint
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -731,6 +748,7 @@ matches snapshot for kube-cluster-name.yaml:
           cluster_name: test-aws-cluster
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -764,6 +782,7 @@ matches snapshot for log-basic.yaml:
           cluster_name: test-log-cluster
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -797,6 +816,7 @@ matches snapshot for log-extra.yaml:
           cluster_name: test-log-cluster
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -830,6 +850,7 @@ matches snapshot for log-legacy.yaml:
           cluster_name: test-log-cluster
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -863,6 +884,7 @@ matches snapshot for priority-class-name.yaml:
           cluster_name: helm-lint
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -897,6 +919,7 @@ matches snapshot for proxy-listener-mode.yaml:
           cluster_name: test-proxy-listener-mode
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
           proxy_listener_mode: multiplex
         kubernetes_service:
@@ -929,6 +952,7 @@ matches snapshot for resources.yaml:
           cluster_name: helm-lint
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -962,6 +986,7 @@ matches snapshot for separate-mongo-listener.yaml:
           cluster_name: helm-lint
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -997,6 +1022,7 @@ matches snapshot for separate-postgres-listener.yaml:
           cluster_name: helm-lint
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -1032,6 +1058,7 @@ matches snapshot for service.yaml:
           cluster_name: helm-lint
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -1065,6 +1092,7 @@ matches snapshot for standalone-customsize.yaml:
           cluster_name: test-standalone-cluster
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -1103,6 +1131,7 @@ matches snapshot for standalone-existingpvc.yaml:
           cluster_name: test-standalone-cluster
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -1148,6 +1177,7 @@ matches snapshot for tolerations.yaml:
           cluster_name: test-aws-cluster
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -1181,6 +1211,7 @@ matches snapshot for version-override.yaml:
           cluster_name: test-cluster-name
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -1217,6 +1248,7 @@ matches snapshot for volumes.yaml:
           cluster_name: helm-lint
           authentication:
             type: local
+            local_auth: true
             second_factor: otp
         kubernetes_service:
           enabled: true
@@ -1250,6 +1282,7 @@ matches snapshot for webauthn.yaml:
           cluster_name: helm-lint
           authentication:
             type: local
+            local_auth: true
             second_factor: on
             webauthn:
               rp_id: helm-lint

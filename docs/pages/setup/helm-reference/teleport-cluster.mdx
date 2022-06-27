@@ -63,13 +63,26 @@ This reference details available values for the `teleport-cluster` chart.
 
 `kubeClusterName` sets the name used for the Kubernetes cluster. This name will be shown to Teleport users connecting to the cluster.
 
-## `authenticationType`
+## `authentication`
+
+### `authentication.type`
 
 | Type | Default value | Required? | `teleport.yaml` equivalent | Can be used in `custom` mode? |
 | - | - | - | - | - |
 | `string` | `local` | Yes | `auth_service.authentication.type` | ❌ |
 
-`authenticationType` controls the authentication scheme used by Teleport. Possible values are `local` and `github` for OSS, plus `oidc`, `saml` for Enterprise.
+`authentication.type` controls the authentication scheme used by Teleport. Possible values are `local` and `github` for OSS, plus `oidc`, `saml` for Enterprise.
+
+## `authentication.localAuth`
+
+| Type | Default value | Required? | `teleport.yaml` equivalent | Can be used in `custom` mode? |
+| - | - | - | - | - |
+| `bool` | `true` | No | `auth_service.authentication.local_auth` | ❌ |
+
+`authentication.localAuth` controls whether local authentication is enabled.
+When disabled, users can only login through non-local auth like `saml`, `oidc` or `github`.
+
+[Disabling local auth is required for FedRAMP / FIPS](../../../enterprise/ssh-kubernetes-fedramp.mdx).
 
 ## `authenticationSecondFactor`
 
@@ -112,17 +125,6 @@ By default all devices are allowed.
 This field allows you to forbid specific device models and vendors, while allowing all others (provided they clear attestation_allowed_cas as well).
 Devices within this list will be rejected during registration.
 By default no devices are forbidden.
-
-## `disableLocalAuthentication`
-
-| Type | Default value | Required? | `teleport.yaml` equivalent | Can be used in `custom` mode? |
-| - | - | - | - | - |
-| `bool` | `false` | No | The inverse of `auth_service.authentication.local_auth` | ❌ |
-
-`disableLocalAuthentication` sets `auth_service.authentication.local_auth` to `false`.
-Users can only login through non-local auth like `saml`, `oidc` or `github`.
-
-[This is required for FedRAMP / FIPS](../../../enterprise/ssh-kubernetes-fedramp.mdx).
 
 ## `proxyListenerMode`
 
