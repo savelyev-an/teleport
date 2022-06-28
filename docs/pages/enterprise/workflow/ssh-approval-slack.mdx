@@ -83,7 +83,7 @@ and will require access to both the public internet and the Teleport Auth Servic
   $ helm install teleport-plugin-slack teleport/teleport-plugin-slack --values teleport-slack-helm.yaml
   ```
 
-  See an example for `teleport-slack-helm.yaml` under [Running Teleport in Kubernetes?](#running-teleport-in-kubernetes)
+  See an example for `teleport-slack-helm.yaml` in *Running Teleport in Kubernetes?* under [Edit the config file](#edit-the-config-file).
 </Details>
 
 ## Step 2/7. Create a user and role for the plugin
@@ -221,7 +221,7 @@ generated in the [export identity](#step-37-export-the-access-plugin-identity) s
 kubectl create secret generic teleport-plugin-slack-identity --from-file=auth_id=auth.pem
 ```
 
-For installation instructions, see [Installing via Helm?](#installing-via-helm)
+For installation instructions, see Installing via Helm? under [Step 1/7. Install the Teleport Slack plugin](#step-17-install-the-teleport-slack-plugin)
 </Details>
 
 **`[slack]`**
