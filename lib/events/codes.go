@@ -329,6 +329,9 @@ const (
 	// UpgradeWindowStartUpdatedCode is the edit code of UpgradeWindowStartUpdateEvent.
 	UpgradeWindowStartUpdatedCode = "TUW01I"
 
+	DiscoveryScriptEC2SuccessCode = "TDS00I"
+	DiscoveryScriptEC2FailCode    = "TDS00W"
+
 	// UnknownCode is used when an event of unknown type is encountered.
 	UnknownCode = apievents.UnknownCode
 )

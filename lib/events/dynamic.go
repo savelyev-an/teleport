@@ -247,6 +247,8 @@ func FromEventFields(fields EventFields) (events.AuditEvent, error) {
 		e = &events.SFTP{}
 	case UpgradeWindowStartUpdateEvent:
 		e = &events.UpgradeWindowStartUpdate{}
+	case EC2DiscoveryInstallScriptEvent:
+		e = &events.EC2DiscoveryScriptRun{}
 	case UnknownEvent:
 		e = &events.Unknown{}
 	default:
