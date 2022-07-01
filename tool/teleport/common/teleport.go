@@ -470,6 +470,11 @@ func normalizeOutput(output string) string {
 }
 
 func checkConfigurationFileVersion(version string) error {
+	// allow an empty version as we default to v3
+	if version == "" {
+		return nil
+	}
+
 	has := false
 
 	for _, v := range defaults.TeleportVersions {
