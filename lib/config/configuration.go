@@ -1937,8 +1937,10 @@ func Configure(clf *CommandLineFlags, cfg *service.Config) error {
 		cfg.PIDFile = clf.PIDFile
 	}
 
-	// store the value of the --token flag:
-	cfg.StoreToken(clf.AuthToken)
+	if clf.AuthToken != "" {
+		// store the value of the --token flag:
+		cfg.StoreToken(clf.AuthToken)
+	}
 
 	// Apply flags used for the node to validate the Auth Server.
 	if err = cfg.ApplyCAPins(clf.CAPins); err != nil {
