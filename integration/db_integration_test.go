@@ -1105,7 +1105,7 @@ func setupDatabaseTest(t *testing.T, options ...testOptionFunc) *databasePack {
 	}
 	rdConf := service.MakeDefaultConfig()
 	rdConf.DataDir = t.TempDir()
-	rdConf.Token = "static-token-value"
+	rdConf.StoreToken("static-token-value")
 	rdConf.AuthServers = []utils.NetAddr{
 		{
 			AddrNetwork: "tcp",
@@ -1143,7 +1143,7 @@ func setupDatabaseTest(t *testing.T, options ...testOptionFunc) *databasePack {
 	}
 	ldConf := service.MakeDefaultConfig()
 	ldConf.DataDir = t.TempDir()
-	ldConf.Token = "static-token-value"
+	ldConf.StoreToken("static-token-value")
 	ldConf.AuthServers = []utils.NetAddr{
 		{
 			AddrNetwork: "tcp",
@@ -1305,7 +1305,7 @@ type databaseAgentStartParams struct {
 func (p *databasePack) startRootDatabaseAgent(t *testing.T, params databaseAgentStartParams) (*service.TeleportProcess, *auth.Client) {
 	conf := service.MakeDefaultConfig()
 	conf.DataDir = t.TempDir()
-	conf.Token = "static-token-value"
+	conf.StoreToken("static-token-value")
 	conf.DiagnosticAddr = utils.NetAddr{AddrNetwork: "tcp", Addr: net.JoinHostPort("localhost", helpers.NewPortStr())}
 	conf.AuthServers = []utils.NetAddr{
 		{
