@@ -1097,6 +1097,15 @@ func applyKubeConfig(fc *FileConfig, cfg *service.Config) error {
 		}
 	}
 
+	for _, matcher := range fc.Kube.AWSMatchers {
+		cfg.Kube.AWSMatchers = append(cfg.Kube.AWSMatchers,
+			services.AWSMatcher{
+				Types:   matcher.Types,
+				Regions: matcher.Regions,
+				Tags:    matcher.Tags,
+			})
+	}
+
 	// Sanity check the local proxy config, so that users don't forget to
 	// enable the k8s endpoint there.
 	if fc.Proxy.Enabled() && fc.Proxy.Kube.Disabled() && fc.Proxy.KubeAddr == "" {

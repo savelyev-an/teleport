@@ -296,7 +296,8 @@ type Forwarder struct {
 	ctx context.Context
 	// creds contain kubernetes credentials for multiple clusters.
 	// map key is cluster name.
-	creds map[string]*kubeCreds
+	creds        map[string]*kubeCreds
+	rwMutexCreds sync.RWMutex
 	// sessions tracks in-flight sessions
 	sessions map[uuid.UUID]*session
 	// upgrades connections to websockets
@@ -1738,6 +1739,10 @@ func (f *Forwarder) newClusterSessionSameCluster(ctx authContext) (*clusterSessi
 }
 
 func (f *Forwarder) newClusterSessionLocal(ctx authContext) (*clusterSession, error) {
+	// TODO:
+	f.rwMutexCreds.RLock()
+	defer f.rwMutexCreds.RUnlock()
+
 	if len(f.creds) == 0 {
 		return nil, trace.NotFound("this Teleport process is not configured for direct Kubernetes access; you likely need to 'tsh login' into a leaf cluster or 'tsh kube login' into a different kubernetes cluster")
 	}
@@ -2018,6 +2023,8 @@ func (f *Forwarder) kubeClusters() []*types.KubernetesClusterV3 {
 	}
 
 	res := make([]*types.KubernetesClusterV3, 0, len(f.creds))
+	f.rwMutexCreds.RLock()
+	defer f.rwMutexCreds.RUnlock()
 	for n := range f.creds {
 		cluster, err := types.NewKubernetesClusterV3(
 			types.Metadata{

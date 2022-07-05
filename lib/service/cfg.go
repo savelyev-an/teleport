@@ -636,6 +636,9 @@ type KubeConfig struct {
 	// CheckImpersonationPermissions is an optional override to the default
 	// impersonation permissions check, for use in testing.
 	CheckImpersonationPermissions proxy.ImpersonationPermissionsChecker
+
+	// AWSMatchers are used to match EKS clusters for auto enrollment.
+	AWSMatchers []services.AWSMatcher
 }
 
 // DatabasesConfig configures the database proxy service.

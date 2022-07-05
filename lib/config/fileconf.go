@@ -1503,6 +1503,8 @@ type Kube struct {
 	// Static and dynamic labels for RBAC on kubernetes clusters.
 	StaticLabels  map[string]string `yaml:"labels,omitempty"`
 	DynamicLabels []CommandLabel    `yaml:"commands,omitempty"`
+	// AWSMatchers are used to match EKS clusters
+	AWSMatchers []AWSMatcher `yaml:"aws,omitempty"`
 }
 
 // ReverseTunnel is a SSH reverse tunnel maintained by one cluster's

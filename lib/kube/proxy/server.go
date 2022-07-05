@@ -31,6 +31,7 @@ import (
 	"github.com/gravitational/teleport/lib/limiter"
 	"github.com/gravitational/teleport/lib/multiplexer"
 	"github.com/gravitational/teleport/lib/reversetunnel"
+	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/srv"
 	"github.com/gravitational/teleport/lib/utils"
 
@@ -59,6 +60,8 @@ type TLSServerConfig struct {
 	ConnectedProxyGetter *reversetunnel.ConnectedProxyGetter
 	// Log is the logger.
 	Log log.FieldLogger
+	// AWSMatcher are used to match EKS clusters.
+	AWSMatchers []services.AWSMatcher
 }
 
 // CheckAndSetDefaults checks and sets default values

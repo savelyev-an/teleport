@@ -26,6 +26,8 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/aws/aws-sdk-go/aws"
 	awssession "github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/eks"
+	"github.com/aws/aws-sdk-go/service/eks/eksiface"
 	"github.com/aws/aws-sdk-go/service/elasticache"
 	"github.com/aws/aws-sdk-go/service/elasticache/elasticacheiface"
 	"github.com/aws/aws-sdk-go/service/iam"
@@ -66,6 +68,8 @@ type CloudClients interface {
 	GetAWSIAMClient(region string) (iamiface.IAMAPI, error)
 	// GetAWSSTSClient returns AWS STS client for the specified region.
 	GetAWSSTSClient(region string) (stsiface.STSAPI, error)
+	// GetAWSEKSClient returns AWS EC2 client for the specified region.
+	GetAWSEKSClient(region string) (eksiface.EKSAPI, error)
 	// GetGCPIAMClient returns GCP IAM client.
 	GetGCPIAMClient(context.Context) (*gcpcredentials.IamCredentialsClient, error)
 	// GetGCPSQLAdminClient returns GCP Cloud SQL Admin client.
@@ -168,6 +172,15 @@ func (c *cloudClients) GetAWSSTSClient(region string) (stsiface.STSAPI, error) {
 		return nil, trace.Wrap(err)
 	}
 	return sts.New(session), nil
+}
+
+// GetAWSEC2Client returns AWS EC2 client for the specified region.
+func (c *cloudClients) GetAWSEKSClient(region string) (eksiface.EKSAPI, error) {
+	session, err := c.GetAWSSession(region)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	return eks.New(session), nil
 }
 
 // GetGCPIAMClient returns GCP IAM client.
@@ -289,6 +302,7 @@ type TestCloudClients struct {
 	SecretsManager secretsmanageriface.SecretsManagerAPI
 	IAM            iamiface.IAMAPI
 	STS            stsiface.STSAPI
+	EKS            eksiface.EKSAPI
 	GCPSQL         GCPSQLAdminClient
 }
 
@@ -333,6 +347,11 @@ func (c *TestCloudClients) GetAWSIAMClient(region string) (iamiface.IAMAPI, erro
 // GetAWSSTSClient returns AWS STS client for the specified region.
 func (c *TestCloudClients) GetAWSSTSClient(region string) (stsiface.STSAPI, error) {
 	return c.STS, nil
+}
+
+// GetAWSSEKSClient returns AWS EKS client for the specified region.
+func (c *TestCloudClients) GetAWSEKSClient(region string) (eksiface.EKSAPI, error) {
+	return c.EKS, nil
 }
 
 // GetGCPIAMClient returns GCP IAM client.
