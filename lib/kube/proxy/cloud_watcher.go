@@ -42,12 +42,12 @@ func (w *Watcher) Start() {
 	ticker := time.NewTicker(w.waitTime)
 	for {
 		for _, fetcher := range w.fetchers {
-			inst, err := fetcher.GetKubeClusters(w.ctx)
+			_, err := fetcher.GetKubeClusters(w.ctx)
 			if err != nil {
 				log.Error("Failed to fetch EC2 instances: ", err)
 				continue
 			}
-			w.Instances <- inst
+			//	w.Instances <- inst
 		}
 		select {
 		case <-ticker.C:
@@ -77,7 +77,7 @@ func NewCloudServerWatcher(ctx context.Context, matchers []services.AWSMatcher, 
 			if err != nil {
 				return nil, trace.Wrap(err)
 			}
-			fetcher, err := newEc2InstanceFetcher(matcher, region, cl)
+			fetcher, err := newEKSClusterFetcher(matcher, region, cl)
 			if err != nil {
 				return nil, trace.Wrap(err)
 			}
@@ -88,80 +88,83 @@ func NewCloudServerWatcher(ctx context.Context, matchers []services.AWSMatcher, 
 }
 
 type fetcher interface {
-	GetKubeClusters(context.Context) ([]*eks.Cluster, error)
+	GetKubeClusters(context.Context) ([]*kubeCreds, error)
 }
 
-type ec2InstanceFetcher struct {
-	Labels types.Labels
-	EKS    eksiface.EKSAPI
-	Region string
+type eksClusterFetcher struct {
+	filterLabels types.Labels
+	eksClient    eksiface.EKSAPI
+	region       string
+	mu           sync.Mutex
 }
 
-func newEc2InstanceFetcher(matcher services.AWSMatcher, region string, eksClient eksiface.EKSAPI) (*ec2InstanceFetcher, error) {
-	fetcherConfig := ec2InstanceFetcher{
-		EKS:    eksClient,
-		Labels: matcher.Tags,
-		Region: region,
+func newEKSClusterFetcher(matcher services.AWSMatcher, region string, eksClient eksiface.EKSAPI) (*eksClusterFetcher, error) {
+	fetcherConfig := eksClusterFetcher{
+		eksClient:    eksClient,
+		filterLabels: matcher.Tags,
+		region:       region,
+		//	cache:        map[string]string{},
 	}
 	return &fetcherConfig, nil
 }
 
-func (f *ec2InstanceFetcher) GetKubeClusters(ctx context.Context) ([]*eks.Cluster, error) {
+func (f *eksClusterFetcher) GetKubeClusters(ctx context.Context) ([]*kubeCreds, error) {
+	type clusterResponse struct {
+		cluster *eks.Cluster
+		err     error
+	}
 	var (
-		clusters []*eks.Cluster
-		mu       sync.Mutex
+		clusterResponseChan chan clusterResponse
 	)
-	err := f.EKS.ListClustersPagesWithContext(ctx,
+	err := f.eksClient.ListClustersPagesWithContext(ctx,
 		&eks.ListClustersInput{},
-		func(lCusters *eks.ListClustersOutput, _ bool) bool {
+		func(lCusters *eks.ListClustersOutput, lastPage bool) bool {
 			wg := &sync.WaitGroup{}
 			wg.Add(len(lCusters.Clusters))
 			for i := 0; i < len(lCusters.Clusters); i++ {
 				eksClusterName := lCusters.Clusters[i]
 
 				go func() {
-					cluster, err := f.EKS.DescribeClusterWithContext(
+					cluster, err := f.eksClient.DescribeClusterWithContext(
 						ctx,
 						&eks.DescribeClusterInput{
 							Name: aws.String(*eksClusterName),
 						},
 					)
+
 					if err != nil {
-						// TODO: handle error here
+						clusterResponseChan <- clusterResponse{
+							cluster: nil,
+							err:     err,
+						}
+						return
 					}
-					mu.Lock()
-					clusters = append(clusters, cluster.Cluster)
-					mu.Unlock()
+
+					clusterResponseChan <- clusterResponse{
+						cluster: cluster.Cluster,
+						err:     nil,
+					}
 				}()
 			}
 			wg.Done()
+			if lastPage {
+				close(clusterResponseChan)
+			}
 			return true
 		},
 	)
-
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
-	return filterByLabels(f.Labels, clusters)
-}
-
-func eksTagsToLabels(tags map[string]*string) map[string]string {
-	labels := make(map[string]string)
-	for key, valuePtr := range tags {
-		if types.IsValidLabelKey(key) {
-			labels[key] = aws.StringValue(valuePtr)
-		} else {
-			log.Debugf("Skipping EC2 tag %q, not a valid label key", key)
-		}
-	}
-	return labels
-}
-
-func filterByLabels(labels types.Labels, clusters []*eks.Cluster) ([]*eks.Cluster, error) {
 	var result []*eks.Cluster
-	for _, cluster := range clusters {
-		instanceLabels := eksTagsToLabels(cluster.Tags)
-		match, _, err := services.MatchLabels(labels, instanceLabels)
+	for clusterRsp := range clusterResponseChan {
+		if clusterRsp.err != nil {
+			// TODO: log me here
+			continue
+		}
+		cluster := clusterRsp.cluster
+		clusterLabels := eksTagsToLabels(cluster.Tags)
+		match, _, err := services.MatchLabels(f.filterLabels, clusterLabels)
 		if err != nil {
 			return nil, trace.Wrap(err)
 		}
@@ -170,5 +173,19 @@ func filterByLabels(labels types.Labels, clusters []*eks.Cluster) ([]*eks.Cluste
 		}
 		result = append(result, cluster)
 	}
-	return result, nil
+
+	_ = result
+	return nil, nil
+}
+
+func eksTagsToLabels(tags map[string]*string) map[string]string {
+	labels := make(map[string]string)
+	for key, valuePtr := range tags {
+		if types.IsValidLabelKey(key) {
+			labels[key] = aws.StringValue(valuePtr)
+		} else {
+			log.Debugf("Skipping EKS tag %q, not a valid label key", key)
+		}
+	}
+	return labels
 }
