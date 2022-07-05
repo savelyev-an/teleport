@@ -610,7 +610,7 @@ func (i *TeleInstance) startNode(tconf *service.Config, authPort string) (*servi
 
 	authServer := utils.MustParseAddr(net.JoinHostPort(i.Hostname, authPort))
 	tconf.AuthServers = append(tconf.AuthServers, *authServer)
-	tconf.StoreToken("token")
+	tconf.SetToken("token")
 	tconf.UploadEventsC = i.UploadEventsC
 	tconf.CachePolicy = service.CachePolicy{
 		Enabled: true,
@@ -667,7 +667,7 @@ func (i *TeleInstance) StartApp(conf *service.Config) (*service.TeleportProcess,
 			Addr:        net.JoinHostPort(Loopback, i.GetPortWeb()),
 		},
 	}
-	conf.StoreToken("token")
+	conf.SetToken("token")
 	conf.UploadEventsC = i.UploadEventsC
 	conf.Auth.Enabled = false
 	conf.Proxy.Enabled = false
@@ -719,7 +719,7 @@ func (i *TeleInstance) StartApps(configs []*service.Config) ([]*service.Teleport
 					Addr:        net.JoinHostPort(Loopback, i.GetPortWeb()),
 				},
 			}
-			cfg.StoreToken("token")
+			cfg.SetToken("token")
 			cfg.UploadEventsC = i.UploadEventsC
 			cfg.Auth.Enabled = false
 			cfg.Proxy.Enabled = false
@@ -783,7 +783,7 @@ func (i *TeleInstance) StartDatabase(conf *service.Config) (*service.TeleportPro
 			Addr:        net.JoinHostPort(Loopback, i.GetPortWeb()),
 		},
 	}
-	conf.StoreToken("token")
+	conf.SetToken("token")
 	conf.UploadEventsC = i.UploadEventsC
 	conf.Auth.Enabled = false
 	conf.Proxy.Enabled = false
@@ -846,7 +846,7 @@ func (i *TeleInstance) StartKube(conf *service.Config, clusterName string) (*ser
 			Addr:        net.JoinHostPort(Loopback, i.GetPortWeb()),
 		},
 	}
-	conf.StoreToken("token")
+	conf.SetToken("token")
 	conf.UploadEventsC = i.UploadEventsC
 	conf.Auth.Enabled = false
 	conf.Proxy.Enabled = false
@@ -895,7 +895,7 @@ func (i *TeleInstance) StartNodeAndProxy(name string, sshPort, proxyWebPort, pro
 	tconf.Log = i.Log
 	authServer := utils.MustParseAddr(net.JoinHostPort(i.Hostname, i.GetPortAuth()))
 	tconf.AuthServers = append(tconf.AuthServers, *authServer)
-	tconf.StoreToken("token")
+	tconf.SetToken("token")
 	tconf.HostUUID = name
 	tconf.Hostname = name
 	tconf.UploadEventsC = i.UploadEventsC
@@ -988,7 +988,7 @@ func (i *TeleInstance) StartProxy(cfg ProxyConfig) (reversetunnel.Server, error)
 	tconf.UploadEventsC = i.UploadEventsC
 	tconf.HostUUID = cfg.Name
 	tconf.Hostname = cfg.Name
-	tconf.StoreToken("token")
+	tconf.SetToken("token")
 
 	tconf.Auth.Enabled = false
 

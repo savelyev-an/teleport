@@ -57,7 +57,7 @@ func newSilentLogger() utils.Logger {
 
 func newNodeConfig(t *testing.T, authAddr utils.NetAddr, tokenName string, joinMethod types.JoinMethod) *service.Config {
 	config := service.MakeDefaultConfig()
-	config.StoreToken(tokenName)
+	config.SetToken(tokenName)
 	config.JoinMethod = joinMethod
 	config.SSH.Enabled = true
 	config.SSH.Addr.Addr = net.JoinHostPort(Host, helpers.NewPortStr())
@@ -73,7 +73,7 @@ func newNodeConfig(t *testing.T, authAddr utils.NetAddr, tokenName string, joinM
 func newProxyConfig(t *testing.T, authAddr utils.NetAddr, tokenName string, joinMethod types.JoinMethod) *service.Config {
 	config := service.MakeDefaultConfig()
 	config.Version = defaults.TeleportConfigVersionV2
-	config.StoreToken(tokenName)
+	config.SetToken(tokenName)
 	config.JoinMethod = joinMethod
 	config.SSH.Enabled = false
 	config.Auth.Enabled = false

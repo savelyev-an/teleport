@@ -175,7 +175,7 @@ func (p *ProxySuite) addNodeToLeafCluster(t *testing.T, tunnelNodeHostname strin
 		tconf.Console = nil
 		tconf.Log = utils.NewLoggerForTests()
 		tconf.Hostname = tunnelNodeHostname
-		tconf.StoreToken("token")
+		tconf.SetToken("token")
 		tconf.AuthServers = []utils.NetAddr{
 			{
 				AddrNetwork: "tcp",
@@ -503,7 +503,7 @@ func mustStartALPNLocalProxy(t *testing.T, addr string, protocol alpncommon.Prot
 func makeNodeConfig(nodeName, authAddr string) *service.Config {
 	nodeConfig := service.MakeDefaultConfig()
 	nodeConfig.Hostname = nodeName
-	nodeConfig.StoreToken("token")
+	nodeConfig.SetToken("token")
 	nodeConfig.AuthServers = []utils.NetAddr{
 		{
 			AddrNetwork: "tcp",

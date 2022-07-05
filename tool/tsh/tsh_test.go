@@ -1619,7 +1619,7 @@ func makeTestSSHNode(t *testing.T, authAddr *utils.NetAddr, opts ...testServerOp
 	cfg.DataDir = t.TempDir()
 
 	cfg.AuthServers = []utils.NetAddr{*authAddr}
-	cfg.StoreToken(staticToken)
+	cfg.SetToken(staticToken)
 	cfg.Auth.Enabled = false
 	cfg.Proxy.Enabled = false
 	cfg.SSH.Enabled = true
@@ -1720,7 +1720,7 @@ func makeTestServers(t *testing.T, opts ...testServerOptFunc) (auth *service.Tel
 	cfg.DataDir = t.TempDir()
 
 	cfg.AuthServers = []utils.NetAddr{*authAddr}
-	cfg.StoreToken(staticToken)
+	cfg.SetToken(staticToken)
 	cfg.SSH.Enabled = false
 	cfg.Auth.Enabled = false
 	cfg.Proxy.Enabled = true
