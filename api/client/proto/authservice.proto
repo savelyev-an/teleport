@@ -124,6 +124,12 @@ message Event {
         // SnowflakeSession is a Snowflake web session.
         types.WebSessionV2 SnowflakeSession = 31
             [ (gogoproto.jsontag) = "snowflake_session,omitempty" ];
+        // KubernetesServer is an Kubernetes server resource.
+        types.KubernetesServerV3 KubernetesServer = 32
+            [ (gogoproto.jsontag) = "kubernetes_server,omitempty" ];
+        // KubernetesCluster is an Kubernetes cluster resource.
+        types.KubernetesClusterV3 KubernetesCluster = 33
+            [ (gogoproto.jsontag) = "kubernetes_cluster,omitempty" ];
     }
 }
 
@@ -768,16 +774,36 @@ message GetKubeServicesResponse {
 
 // UpsertKubeServiceRequest are the parameters used to add or update a
 // kubernetes service.
+// DELETE IN 13.0
 message UpsertKubeServiceRequest { types.ServerV2 Server = 1 [ (gogoproto.jsontag) = "server" ]; }
 
 // DeleteKubeServiceRequest are the parameters used to remove a kubernetes service.
+// DELETE IN 13.0
 message DeleteKubeServiceRequest {
     // Name is the name of the kubernetes service to delete.
     string Name = 2 [ (gogoproto.jsontag) = "name" ];
 }
 
 // DeleteAllKubeServicesRequest are the parameters used to remove all kubernetes services.
+// DELETE IN 13.0
 message DeleteAllKubeServicesRequest {}
+
+// UpsertKubeServerRequest are the parameters used to add or update a
+// kubernetes server.
+message UpsertKubeServerRequest {
+    types.KubernetesServerV3 Server = 1 [ (gogoproto.jsontag) = "server" ];
+}
+
+// DeleteKubeServerRequest are the parameters used to remove a kubernetes server.
+message DeleteKubeServerRequest {
+    // HostID is the kube server host uuid.
+    string HostID = 1 [ (gogoproto.jsontag) = "host_id" ];
+    // Name is the name of the kubernetes service to delete.
+    string Name = 2 [ (gogoproto.jsontag) = "name" ];
+}
+
+// DeleteAllKubeServersRequest are the parameters used to remove all kubernetes servers.
+message DeleteAllKubeServersRequest {}
 
 // GetDatabaseServersRequest is a request to return all registered database servers.
 // DELETE IN 10.0.
@@ -1536,6 +1562,7 @@ message PaginatedResource {
         // Nodes represents a Server resource.
         types.ServerV2 Node = 3 [ (gogoproto.jsontag) = "node,omitempty" ];
         // KubeService represents a KubernetesService resource.
+        // DELETE IN 13.0. Deprecated, use KubernetesService field.
         types.ServerV2 KubeService = 4 [ (gogoproto.jsontag) = "kube_service,omitempty" ];
         // WindowsDesktop represents a WindowsDesktop resource.
         types.WindowsDesktopV3 WindowsDesktop = 5
@@ -1543,6 +1570,9 @@ message PaginatedResource {
         // KubeCluster represents a KubeCluster resource.
         types.KubernetesClusterV3 KubeCluster = 6
             [ (gogoproto.jsontag) = "kube_cluster,omitempty" ];
+        // KubernetesService represents a KubernetesService Server resource.
+        types.KubernetesServerV3 KubernetesService = 7
+            [ (gogoproto.jsontag) = "kubernetes_service,omitempty" ];
     }
 }
 
@@ -2147,11 +2177,21 @@ service AuthService {
         option deprecated = true;
     };
     // UpsertKubeServiceV2 adds or updates a kubernetes service.
+    // DELETE IN 13.0. Deprecated, use UpsertKubeServer
     rpc UpsertKubeServiceV2(UpsertKubeServiceRequest) returns (types.KeepAlive);
     // DeleteKubeService removes a kubernetes service.
+    // DELETE IN 13.0. Deprecated, use DeleteKubeServer
     rpc DeleteKubeService(DeleteKubeServiceRequest) returns (google.protobuf.Empty);
     // DeleteAllKubeServices removes all kubernetes services.
+    // DELETE IN 13.0. Deprecated, use DeleteAllKubeServers
     rpc DeleteAllKubeServices(DeleteAllKubeServicesRequest) returns (google.protobuf.Empty);
+
+    // UpsertKubeServer adds or updates a kubernetes server.
+    rpc UpsertKubeServer(UpsertKubeServerRequest) returns (types.KeepAlive);
+    // DeleteKubeServer removes a kubernetes server.
+    rpc DeleteKubeServer(DeleteKubeServerRequest) returns (google.protobuf.Empty);
+    // DeleteAllKubeServers removes all kubernetes servers.
+    rpc DeleteAllKubeServers(DeleteAllKubeServersRequest) returns (google.protobuf.Empty);
 
     // GetDatabaseServers returns all registered database proxy servers.
     // DELETE IN 10.0. Deprecated, use ListResources.
