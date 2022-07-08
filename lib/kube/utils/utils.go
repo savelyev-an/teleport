@@ -19,7 +19,6 @@ package utils
 import (
 	"context"
 	"encoding/hex"
-	"sort"
 
 	"github.com/gravitational/teleport/api/client"
 	"github.com/gravitational/teleport/api/client/proto"
@@ -164,10 +163,19 @@ func KubeClusterNames(ctx context.Context, p KubeServicesPresence) ([]string, er
 }
 
 func extractAndSortKubeClusterNames(kss []types.Server) []string {
-	kubeClusters := extractAndSortKubeClusters(kss)
+	var kubeServers []types.KubeServer
+	for _, ks := range kss {
+		kServers, err := types.NewKubeServersV3FromServer(ks)
+		if err != nil {
+			// TODO: check what to do here
+			continue
+		}
+		kubeServers = append(kubeServers, kServers...)
+	}
+	kubeClusters := extractAndSortKubeClusters(kubeServers)
 	kubeClusterNames := make([]string, len(kubeClusters))
 	for i := range kubeClusters {
-		kubeClusterNames[i] = kubeClusters[i].Name
+		kubeClusterNames[i] = kubeClusters[i].GetName()
 	}
 
 	return kubeClusterNames
@@ -177,49 +185,85 @@ func extractAndSortKubeClusterNames(kss []types.Server) []string {
 // registered in p.
 //
 // DELETE IN 11.0.0, replaced by ListKubeClustersWithFilters
-func KubeClusters(ctx context.Context, p KubeServicesPresence) ([]*types.KubernetesCluster, error) {
+func KubeClusters(ctx context.Context, p KubeServicesPresence) ([]types.KubeCluster, error) {
 	kss, err := p.GetKubeServices(ctx)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
-	return extractAndSortKubeClusters(kss), nil
+	var kubeServers []types.KubeServer
+	for _, ks := range kss {
+		servers, err := types.NewKubeServersV3FromServer(ks)
+		if err != nil {
+			return nil, trace.Wrap(err)
+		}
+		kubeServers = append(kubeServers, servers...)
+	}
+
+	return extractAndSortKubeClusters(kubeServers), nil
 }
 
 // ListKubeClusterWithFilters returns a sorted list of unique kubernetes clusters
 // registered in p.
-func ListKubeClustersWithFilters(ctx context.Context, p client.ListResourcesClient, req proto.ListResourcesRequest) ([]*types.KubernetesCluster, error) {
-	req.ResourceType = types.KindKubeService
-	var kss []types.Server
+func ListKubeClustersWithFilters(ctx context.Context, p client.ListResourcesClient, req proto.ListResourcesRequest) ([]types.KubeCluster, error) {
+	req.ResourceType = types.KindKubeServer
+	var kss []types.KubeServer
 
+	resources, err := client.GetResourcesWithFilters(ctx, p, req)
+	if trace.IsNotImplemented(err) {
+		resources, err = listKubeClustersWithFiltersFallback(ctx, p, req)
+	}
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	kss, err = types.ResourcesWithLabels(resources).AsKubeServers()
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	return extractAndSortKubeClusters(kss), nil
+}
+
+func listKubeClustersWithFiltersFallback(ctx context.Context, p client.ListResourcesClient, req proto.ListResourcesRequest) ([]types.ResourceWithLabels, error) {
+	req.ResourceType = types.KindKubeService
 	resources, err := client.GetResourcesWithFilters(ctx, p, req)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
 
-	kss, err = types.ResourcesWithLabels(resources).AsServers()
+	kubeServices, err := types.ResourcesWithLabels(resources).AsServers()
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
-
-	return extractAndSortKubeClusters(kss), nil
-}
-
-func extractAndSortKubeClusters(kss []types.Server) []*types.KubernetesCluster {
-	uniqueClusters := make(map[string]*types.KubernetesCluster)
-	for _, ks := range kss {
-		for _, kc := range ks.GetKubernetesClusters() {
-			uniqueClusters[kc.Name] = kc
+	var resourcesKubeServers []types.ResourceWithLabels
+	for _, kss := range kubeServices {
+		kubeServers, err := types.NewKubeServersV3FromServer(kss)
+		if err != nil {
+			return nil, trace.Wrap(err)
+		}
+		for _, kubeServer := range kubeServers {
+			resourcesKubeServers = append(resourcesKubeServers, kubeServer)
 		}
 	}
-	kubeClusters := make([]*types.KubernetesCluster, 0, len(uniqueClusters))
+	return resourcesKubeServers, nil
+}
+
+func extractAndSortKubeClusters(kss []types.KubeServer) []types.KubeCluster {
+	uniqueClusters := make(map[string]types.KubeCluster)
+	for _, ks := range kss {
+		uniqueClusters[ks.GetName()] = ks.GetCluster()
+	}
+	kubeClusters := make([]types.KubeCluster, 0, len(uniqueClusters))
 	for _, cluster := range uniqueClusters {
 		kubeClusters = append(kubeClusters, cluster)
 	}
-	sort.Slice(kubeClusters, func(i, j int) bool {
-		return kubeClusters[i].Name < kubeClusters[j].Name
+
+	sorted := types.KubeClusters(kubeClusters)
+	sorted.SortByCustom(types.SortBy{
+		Field: types.ResourceMetadataName,
 	})
 
-	return kubeClusters
+	return []types.KubeCluster(sorted)
 }
 
 // CheckOrSetKubeCluster validates kubeClusterName if it's set, or a sane

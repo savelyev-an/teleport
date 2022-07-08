@@ -967,7 +967,7 @@ func (c *Client) DeleteSemaphore(ctx context.Context, filter types.SemaphoreFilt
 
 // GetKubeServers returns the list of kubernetes servers registered in the
 // cluster.
-func (c *Client) GetKubeServers(ctx context.Context) ([]types.KubeServer, error) {
+func (c *Client) GetKubernetesServers(ctx context.Context) ([]types.KubeServer, error) {
 	resources, err := GetResourcesWithFilters(ctx, c, proto.ListResourcesRequest{
 		Namespace:    defaults.Namespace,
 		ResourceType: types.KindKubeServer,
@@ -1012,9 +1012,9 @@ func (c *Client) getKubeServersFallback(ctx context.Context) ([]types.KubeServer
 	return servers, nil
 }
 
-// DeleteKubeServer deletes a named kubernetes server.
-func (c *Client) DeleteKubeServer(ctx context.Context, name, hostID string) error {
-	_, err := c.grpc.DeleteKubeServer(ctx, &proto.DeleteKubeServerRequest{
+// DeleteKubernetesServer deletes a named kubernetes server.
+func (c *Client) DeleteKubernetesServer(ctx context.Context, hostID, name string) error {
+	_, err := c.grpc.DeleteKubernetesServer(ctx, &proto.DeleteKubernetesServerRequest{
 		HostID: hostID,
 		Name:   name,
 	})
@@ -1033,11 +1033,11 @@ func (c *Client) deleteKubeServerFallback(ctx context.Context, name string) erro
 	return trace.Wrap(err)
 }
 
-// DeleteAllKubeServers deletes all registered kubernetes servers.
-func (c *Client) DeleteAllKubeServers(ctx context.Context) error {
-	_, err := c.grpc.DeleteAllKubeServers(ctx, &proto.DeleteAllKubeServersRequest{}, c.callOpts...)
+// DeleteAllKubernetesServers deletes all registered kubernetes servers.
+func (c *Client) DeleteAllKubernetesServers(ctx context.Context) error {
+	_, err := c.grpc.DeleteAllKubernetesServers(ctx, &proto.DeleteAllKubernetesServersRequest{}, c.callOpts...)
 	if trace.IsNotImplemented(err) {
-		return c.deleteAllKubeServersFallback(ctx)
+		return c.deleteAllKubernetesServersFallback(ctx)
 	}
 	return trail.FromGRPC(err)
 }
@@ -1046,19 +1046,19 @@ func (c *Client) DeleteAllKubeServers(ctx context.Context) error {
 // `DeleteAllKubeServices`.
 //
 // DELETE IN 13.0.
-func (c *Client) deleteAllKubeServersFallback(ctx context.Context) error {
+func (c *Client) deleteAllKubernetesServersFallback(ctx context.Context) error {
 	err := c.DeleteAllKubeServices(ctx)
 	return trace.Wrap(err)
 }
 
-// UpsertKubeServiceV2 is used by kubernetes services to report their presence
+// UpsertKubernetesServiceV2 is used by kubernetes services to report their presence
 // to other auth servers in form of hearbeat expiring after ttl period.
-func (c *Client) UpsertKubeServer(ctx context.Context, s types.KubeServer) (*types.KeepAlive, error) {
+func (c *Client) UpsertKubernetesServer(ctx context.Context, s types.KubeServer) (*types.KeepAlive, error) {
 	server, ok := s.(*types.KubernetesServerV3)
 	if !ok {
 		return nil, trace.BadParameter("invalid type %T, expected *types.ServerV2", server)
 	}
-	keepAlive, err := c.grpc.UpsertKubeServer(ctx, &proto.UpsertKubeServerRequest{Server: server}, c.callOpts...)
+	keepAlive, err := c.grpc.UpsertKubernetesServer(ctx, &proto.UpsertKubernetesServerRequest{Server: server}, c.callOpts...)
 	if err != nil {
 		return nil, trail.FromGRPC(err)
 	}

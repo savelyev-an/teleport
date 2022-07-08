@@ -788,22 +788,22 @@ message DeleteKubeServiceRequest {
 // DELETE IN 13.0
 message DeleteAllKubeServicesRequest {}
 
-// UpsertKubeServerRequest are the parameters used to add or update a
+// UpsertKubernetesServerRequest are the parameters used to add or update a
 // kubernetes server.
-message UpsertKubeServerRequest {
+message UpsertKubernetesServerRequest {
     types.KubernetesServerV3 Server = 1 [ (gogoproto.jsontag) = "server" ];
 }
 
-// DeleteKubeServerRequest are the parameters used to remove a kubernetes server.
-message DeleteKubeServerRequest {
+// DeleteKubernetesServerRequest are the parameters used to remove a kubernetes server.
+message DeleteKubernetesServerRequest {
     // HostID is the kube server host uuid.
     string HostID = 1 [ (gogoproto.jsontag) = "host_id" ];
     // Name is the name of the kubernetes service to delete.
     string Name = 2 [ (gogoproto.jsontag) = "name" ];
 }
 
-// DeleteAllKubeServersRequest are the parameters used to remove all kubernetes servers.
-message DeleteAllKubeServersRequest {}
+// DeleteAllKubernetesServersRequest are the parameters used to remove all kubernetes servers.
+message DeleteAllKubernetesServersRequest {}
 
 // GetDatabaseServersRequest is a request to return all registered database servers.
 // DELETE IN 10.0.
@@ -2177,21 +2177,22 @@ service AuthService {
         option deprecated = true;
     };
     // UpsertKubeServiceV2 adds or updates a kubernetes service.
-    // DELETE IN 13.0. Deprecated, use UpsertKubeServer
+    // DELETE IN 13.0. Deprecated, use UpsertKubernetesServer
     rpc UpsertKubeServiceV2(UpsertKubeServiceRequest) returns (types.KeepAlive);
     // DeleteKubeService removes a kubernetes service.
-    // DELETE IN 13.0. Deprecated, use DeleteKubeServer
+    // DELETE IN 13.0. Deprecated, use DeleteKubernetesServer
     rpc DeleteKubeService(DeleteKubeServiceRequest) returns (google.protobuf.Empty);
     // DeleteAllKubeServices removes all kubernetes services.
-    // DELETE IN 13.0. Deprecated, use DeleteAllKubeServers
+    // DELETE IN 13.0. Deprecated, use DeleteAllKubernetesServers
     rpc DeleteAllKubeServices(DeleteAllKubeServicesRequest) returns (google.protobuf.Empty);
 
-    // UpsertKubeServer adds or updates a kubernetes server.
-    rpc UpsertKubeServer(UpsertKubeServerRequest) returns (types.KeepAlive);
-    // DeleteKubeServer removes a kubernetes server.
-    rpc DeleteKubeServer(DeleteKubeServerRequest) returns (google.protobuf.Empty);
-    // DeleteAllKubeServers removes all kubernetes servers.
-    rpc DeleteAllKubeServers(DeleteAllKubeServersRequest) returns (google.protobuf.Empty);
+    // UpsertKubernetesServer adds or updates a kubernetes server.
+    rpc UpsertKubernetesServer(UpsertKubernetesServerRequest) returns (types.KeepAlive);
+    // DeleteKubernetesServer removes a kubernetes server.
+    rpc DeleteKubernetesServer(DeleteKubernetesServerRequest) returns (google.protobuf.Empty);
+    // DeleteAllKubernetesServers removes all kubernetes servers.
+    rpc DeleteAllKubernetesServers(DeleteAllKubernetesServersRequest)
+        returns (google.protobuf.Empty);
 
     // GetDatabaseServers returns all registered database proxy servers.
     // DELETE IN 10.0. Deprecated, use ListResources.

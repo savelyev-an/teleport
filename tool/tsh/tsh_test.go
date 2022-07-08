@@ -1152,12 +1152,16 @@ func TestKubeConfigUpdate(t *testing.T) {
 			kubeStatus: &kubernetesStatus{
 				clusterAddr:         "https://a.example.com:3026",
 				teleportClusterName: "a.example.com",
-				kubeClusters: []*types.KubernetesCluster{
-					{
-						Name: "dev",
+				kubeClusters: []types.KubeCluster{
+					&types.KubernetesClusterV3{
+						Metadata: types.Metadata{
+							Name: "dev",
+						},
 					},
-					{
-						Name: "prod",
+					&types.KubernetesClusterV3{
+						Metadata: types.Metadata{
+							Name: "prod",
+						},
 					},
 				},
 				credentials: creds,
@@ -1184,12 +1188,16 @@ func TestKubeConfigUpdate(t *testing.T) {
 			kubeStatus: &kubernetesStatus{
 				clusterAddr:         "https://a.example.com:3026",
 				teleportClusterName: "a.example.com",
-				kubeClusters: []*types.KubernetesCluster{
-					{
-						Name: "dev",
+				kubeClusters: []types.KubeCluster{
+					&types.KubernetesClusterV3{
+						Metadata: types.Metadata{
+							Name: "dev",
+						},
 					},
-					{
-						Name: "prod",
+					&types.KubernetesClusterV3{
+						Metadata: types.Metadata{
+							Name: "prod",
+						},
 					},
 				},
 				credentials: creds,
@@ -1216,12 +1224,16 @@ func TestKubeConfigUpdate(t *testing.T) {
 			kubeStatus: &kubernetesStatus{
 				clusterAddr:         "https://a.example.com:3026",
 				teleportClusterName: "a.example.com",
-				kubeClusters: []*types.KubernetesCluster{
-					{
-						Name: "dev",
+				kubeClusters: []types.KubeCluster{
+					&types.KubernetesClusterV3{
+						Metadata: types.Metadata{
+							Name: "dev",
+						},
 					},
-					{
-						Name: "prod",
+					&types.KubernetesClusterV3{
+						Metadata: types.Metadata{
+							Name: "prod",
+						},
 					},
 				},
 				credentials: creds,
@@ -1240,7 +1252,7 @@ func TestKubeConfigUpdate(t *testing.T) {
 			kubeStatus: &kubernetesStatus{
 				clusterAddr:         "https://a.example.com:3026",
 				teleportClusterName: "a.example.com",
-				kubeClusters:        []*types.KubernetesCluster{},
+				kubeClusters:        []types.KubeCluster{},
 				credentials:         creds,
 			},
 			errorAssertion: require.NoError,
@@ -1260,12 +1272,16 @@ func TestKubeConfigUpdate(t *testing.T) {
 			kubeStatus: &kubernetesStatus{
 				clusterAddr:         "https://a.example.com:3026",
 				teleportClusterName: "a.example.com",
-				kubeClusters: []*types.KubernetesCluster{
-					{
-						Name: "dev",
+				kubeClusters: []types.KubeCluster{
+					&types.KubernetesClusterV3{
+						Metadata: types.Metadata{
+							Name: "dev",
+						},
 					},
-					{
-						Name: "prod",
+					&types.KubernetesClusterV3{
+						Metadata: types.Metadata{
+							Name: "prod",
+						},
 					},
 				},
 				credentials: creds,
@@ -2438,22 +2454,32 @@ func TestSerializeKubeClusters(t *testing.T) {
 		}
 	]
 	`
-
-	clusters := []*types.KubernetesCluster{
-		{
+	c1, err := types.NewKubernetesClusterV3(
+		types.Metadata{
 			Name: "cluster1",
-			StaticLabels: map[string]string{
+			Labels: map[string]string{
 				"foo": "bar",
 			},
+		},
+		types.KubernetesClusterSpecV3{
 			DynamicLabels: map[string]types.CommandLabelV2{
 				"cmd": {
 					Result: "result",
 				},
 			},
 		},
-		{
+	)
+	require.NoError(t, err)
+	c2, err := types.NewKubernetesClusterV3(
+		types.Metadata{
 			Name: "cluster2",
 		},
+		types.KubernetesClusterSpecV3{},
+	)
+
+	require.NoError(t, err)
+	clusters := []types.KubeCluster{
+		c1, c2,
 	}
 	testSerialization(t, expected, func(f string) (string, error) {
 		return serializeKubeClusters(clusters, "cluster1", f)

@@ -1377,7 +1377,7 @@ func (a *ServerWithRoles) listResourcesWithSort(ctx context.Context, req proto.L
 		resources = servers.AsResources()
 
 	case types.KindKubernetesCluster:
-		kubeservices, err := a.GetKubeServices(ctx)
+		kubeservices, err := a.GetKubernetesServers(ctx)
 		if err != nil {
 			return nil, trace.Wrap(err)
 		}
@@ -1385,13 +1385,7 @@ func (a *ServerWithRoles) listResourcesWithSort(ctx context.Context, req proto.L
 		// Extract kube clusters into its own list.
 		var clusters []types.KubeCluster
 		for _, svc := range kubeservices {
-			for _, legacyCluster := range svc.GetKubernetesClusters() {
-				cluster, err := types.NewKubernetesClusterV3FromLegacyCluster(svc.GetNamespace(), legacyCluster)
-				if err != nil {
-					return nil, trace.Wrap(err)
-				}
-				clusters = append(clusters, cluster)
-			}
+			clusters = append(clusters, svc.GetCluster())
 		}
 
 		sortedClusters := types.KubeClusters(clusters)
@@ -1399,7 +1393,17 @@ func (a *ServerWithRoles) listResourcesWithSort(ctx context.Context, req proto.L
 			return nil, trace.Wrap(err)
 		}
 		resources = sortedClusters.AsResources()
+	case types.KindKubeServer:
+		kubeservers, err := a.GetKubernetesServers(ctx)
+		if err != nil {
+			return nil, trace.Wrap(err)
+		}
 
+		sortedServers := types.KubeServers(kubeservers)
+		if err := sortedServers.SortByCustom(req.SortBy); err != nil {
+			return nil, trace.Wrap(err)
+		}
+		resources = sortedServers.AsResources()
 	case types.KindWindowsDesktop:
 		windowsdesktops, err := a.GetWindowsDesktops(ctx, req.GetWindowsDesktopFilter())
 		if err != nil {
@@ -4028,6 +4032,65 @@ func (a *ServerWithRoles) UpsertKubeServiceV2(ctx context.Context, s types.Serve
 		return nil, trace.Wrap(err)
 	}
 	return a.authServer.UpsertKubeServiceV2(ctx, s)
+}
+
+func (a *ServerWithRoles) checkAccessToKubeCluster(cluster types.KubeCluster) error {
+	return a.context.Checker.CheckAccess(
+		cluster,
+		// MFA is not required for operations on app resources but
+		// will be enforced at the connection time.
+		services.AccessMFAParams{Verified: true})
+}
+
+// GetApplicationServers returns all registered application servers.
+func (a *ServerWithRoles) GetKubernetesServers(ctx context.Context) ([]types.KubeServer, error) {
+	if err := a.action(apidefaults.Namespace, types.KindKubeServer, types.VerbList, types.VerbRead); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	servers, err := a.authServer.GetKubernetesServers(ctx)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	// Filter out apps the caller doesn't have access to.
+	var filtered []types.KubeServer
+	for _, server := range servers {
+		err := a.checkAccessToKubeCluster(server.GetCluster())
+		if err != nil && !trace.IsAccessDenied(err) {
+			return nil, trace.Wrap(err)
+		} else if err == nil {
+			filtered = append(filtered, server)
+		}
+	}
+
+	//REVIEW: check if newKubeChecker is necessary
+
+	return filtered, nil
+}
+
+// UpsertKubeServiceV2 creates or updates a Server representing a teleport
+// kubernetes service.
+func (a *ServerWithRoles) UpsertKubernetesServer(ctx context.Context, s types.KubeServer) (*types.KeepAlive, error) {
+	if err := a.action(apidefaults.Namespace, types.KindKubeServer, types.VerbCreate, types.VerbUpdate); err != nil {
+		return nil, trace.Wrap(err)
+	}
+	return a.authServer.UpsertKubernetesServer(ctx, s)
+}
+
+// DeleteApplicationServer deletes specified application server.
+func (a *ServerWithRoles) DeleteKubernetesServer(ctx context.Context, hostID, name string) error {
+	if err := a.action(apidefaults.Namespace, types.KindKubeServer, types.VerbDelete); err != nil {
+		return trace.Wrap(err)
+	}
+	return a.authServer.DeleteKubernetesServer(ctx, hostID, name)
+}
+
+// DeleteAllApplicationServers deletes all registered application servers.
+func (a *ServerWithRoles) DeleteAllKubernetesServers(ctx context.Context) error {
+	if err := a.action(apidefaults.Namespace, types.KindKubeServer, types.VerbList, types.VerbDelete); err != nil {
+		return trace.Wrap(err)
+	}
+	return a.authServer.DeleteAllKubernetesServers(ctx)
 }
 
 // GetKubeServices returns all Servers representing teleport kubernetes
