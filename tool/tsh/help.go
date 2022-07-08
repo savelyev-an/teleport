@@ -16,11 +16,6 @@ limitations under the License.
 
 package main
 
-import (
-	"fmt"
-	"strings"
-)
-
 const (
 	// loginUsageFooter is printed at the bottom of `tsh help login` output
 	loginUsageFooter = `NOTES:
@@ -39,8 +34,3 @@ EXAMPLES:
   Select cluster "two" using existing credentials and proxy:
   $ tsh login two`
 )
-
-// formatFlagDescription creates the description for the --format flag.
-func formatFlagDescription(formats ...string) string {
-	return fmt.Sprintf("Format output (%s)", strings.Join(formats, ", "))
-}
