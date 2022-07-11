@@ -2162,7 +2162,6 @@ func showDatabasesAsText(clusterFlag string, databases []types.Database, active 
 	if verbose {
 		t = asciitable.MakeTable([]string{"Name", "Description", "Protocol", "Type", "URI", "Allowed Users", "Labels", "Connect", "Expires"}, rows...)
 	} else {
-
 		t = asciitable.MakeTableWithTruncatedColumn([]string{"Name", "Description", "Allowed Users", "Labels", "Connect"}, rows, "Labels")
 	}
 	fmt.Println(t.AsBuffer().String())
@@ -2295,7 +2294,8 @@ func onListClusters(cf *CLIConf) error {
 			ClusterName: rootClusterName,
 			Status:      teleport.RemoteClusterStatusOnline,
 			ClusterType: "root",
-			Selected:    isSelected(rootClusterName)}
+			Selected:    isSelected(rootClusterName),
+		}
 		leafClusterInfo := make([]clusterInfo, 0, len(leafClusters))
 		for _, leaf := range leafClusters {
 			leafClusterInfo = append(leafClusterInfo, clusterInfo{
@@ -2303,7 +2303,8 @@ func onListClusters(cf *CLIConf) error {
 				Status:      leaf.GetConnectionStatus(),
 				ClusterType: "leaf",
 				Labels:      leaf.GetMetadata().Labels,
-				Selected:    isSelected(leaf.GetName())})
+				Selected:    isSelected(leaf.GetName()),
+			})
 		}
 		out, err := serializeClusters(rootClusterInfo, leafClusterInfo, format)
 		if err != nil {
@@ -3048,6 +3049,9 @@ func setClientWebProxyAddr(cf *CLIConf, c *client.Config) error {
 			proxyAddress, err = pickDefaultAddr(
 				timeout, cf.InsecureSkipVerify, parsedAddrs.Host, defaultWebProxyPorts)
 
+			if err != nil {
+				return trace.Wrap(err)
+			}
 			// On error, fall back to the legacy behaviour
 			if err != nil {
 				log.WithError(err).Debug("Proxy port resolution failed, falling back to legacy default.")
