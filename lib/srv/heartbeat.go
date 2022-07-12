@@ -475,6 +475,9 @@ func (h *Heartbeat) announce() error {
 				}
 			case types.KubeServer:
 				keepAlive, err = h.Announcer.UpsertKubernetesServer(h.cancelCtx, current)
+				if err != nil {
+					return trace.Wrap(err)
+				}
 			default:
 				return trace.BadParameter("expected types.KubeServer, got %#v", h.current)
 			}

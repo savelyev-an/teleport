@@ -260,38 +260,6 @@ func (t *TLSServer) getServerInfo(cluster types.KubeCluster) (types.Resource, er
 	return srv, nil
 }
 
-// startCluster registers the specified kubernetes heartbeat.
-func (t *TLSServer) startCluster(ctx context.Context, cluster types.KubeCluster) error {
-
-	// Heartbeat will periodically report the presence of this proxied app
-	// to the auth server.
-	if err := t.startHeartbeat(ctx, cluster); err != nil {
-		return trace.Wrap(err)
-	}
-	t.Log.Debugf("Started %v.", cluster)
-	return nil
-}
-
-// stopApp uninitializes the app with the specified name.
-func (t *TLSServer) stopCluster(ctx context.Context, name string) error {
-	if err := t.stopHeartbeat(name); err != nil {
-		return trace.Wrap(err)
-	}
-	// Heartbeat is stopped but if we don't remove this app server,
-	// it can linger for up to ~10m until its TTL expires.
-	if err := t.removeKubeServer(ctx, name); err != nil && !trace.IsNotFound(err) {
-		return trace.Wrap(err)
-	}
-	t.Log.Debugf("Stopped app %q.", name)
-	return nil
-}
-
-// removeAppServer deletes app server for the specified app.
-func (t *TLSServer) removeKubeServer(ctx context.Context, name string) error {
-	return t.AuthClient.DeleteKubernetesServer(ctx,
-		t.TLSServerConfig.HostID, name)
-}
-
 // startHeartbeat starts the registration heartbeat to the auth server.
 func (t *TLSServer) startHeartbeat(ctx context.Context, kubeCluster types.KubeCluster) error {
 	if t.KubeServiceType != KubeService ||
@@ -321,18 +289,6 @@ func (t *TLSServer) startHeartbeat(ctx context.Context, kubeCluster types.KubeCl
 	defer t.mu.Unlock()
 	t.heartbeats[kubeCluster.GetName()] = heartbeat
 	return nil
-}
-
-// stopHeartbeat stops the heartbeat for the specified cluster.
-func (t *TLSServer) stopHeartbeat(name string) error {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	heartbeat, ok := t.heartbeats[name]
-	if !ok {
-		return nil
-	}
-	delete(t.heartbeats, name)
-	return heartbeat.Close()
 }
 
 // getRotationState is a helper to return this server's CA rotation state.
