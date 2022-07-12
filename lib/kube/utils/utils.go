@@ -19,6 +19,7 @@ package utils
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 
 	"github.com/gravitational/teleport/api/client"
 	"github.com/gravitational/teleport/api/client/proto"
@@ -147,7 +148,7 @@ func EncodeClusterName(clusterName string) string {
 // It's a subset of services.Presence.
 type KubeServicesPresence interface {
 	// GetKubeServices returns a list of registered kubernetes services.
-	GetKubeServices(context.Context) ([]types.Server, error)
+	GetKubernetesServers(context.Context) ([]types.KubeServer, error)
 }
 
 // KubeClusterNames returns a sorted list of unique kubernetes cluster
@@ -155,23 +156,15 @@ type KubeServicesPresence interface {
 //
 // DELETE IN 11.0.0, replaced by ListKubeClustersWithFilters
 func KubeClusterNames(ctx context.Context, p KubeServicesPresence) ([]string, error) {
-	kss, err := p.GetKubeServices(ctx)
+	kss, err := p.GetKubernetesServers(ctx)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
 	return extractAndSortKubeClusterNames(kss), nil
 }
 
-func extractAndSortKubeClusterNames(kss []types.Server) []string {
-	var kubeServers []types.KubeServer
-	for _, ks := range kss {
-		kServers, err := types.NewKubeServersV3FromServer(ks)
-		if err != nil {
-			// TODO: check what to do here
-			continue
-		}
-		kubeServers = append(kubeServers, kServers...)
-	}
+func extractAndSortKubeClusterNames(kubeServers []types.KubeServer) []string {
+
 	kubeClusters := extractAndSortKubeClusters(kubeServers)
 	kubeClusterNames := make([]string, len(kubeClusters))
 	for i := range kubeClusters {
@@ -186,17 +179,9 @@ func extractAndSortKubeClusterNames(kss []types.Server) []string {
 //
 // DELETE IN 11.0.0, replaced by ListKubeClustersWithFilters
 func KubeClusters(ctx context.Context, p KubeServicesPresence) ([]types.KubeCluster, error) {
-	kss, err := p.GetKubeServices(ctx)
+	kubeServers, err := p.GetKubernetesServers(ctx)
 	if err != nil {
 		return nil, trace.Wrap(err)
-	}
-	var kubeServers []types.KubeServer
-	for _, ks := range kss {
-		servers, err := types.NewKubeServersV3FromServer(ks)
-		if err != nil {
-			return nil, trace.Wrap(err)
-		}
-		kubeServers = append(kubeServers, servers...)
 	}
 
 	return extractAndSortKubeClusters(kubeServers), nil
@@ -275,9 +260,10 @@ func CheckOrSetKubeCluster(ctx context.Context, p KubeServicesPresence, kubeClus
 	if err != nil {
 		return "", trace.Wrap(err)
 	}
+	fmt.Println(kubeClusterNames)
 	if kubeClusterName != "" {
 		if !apiutils.SliceContainsStr(kubeClusterNames, kubeClusterName) {
-			return "", trace.BadParameter("kubernetes cluster %q is not registered in this teleport cluster; you can list registered kubernetes clusters using 'tsh kube ls'", kubeClusterName)
+			return "", trace.BadParameter("2kubernetes cluster %q is not registered in this teleport cluster; you can list registered kubernetes clusters using 'tsh kube ls'", kubeClusterName)
 		}
 		return kubeClusterName, nil
 	}

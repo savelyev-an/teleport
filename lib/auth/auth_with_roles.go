@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/coreos/go-semver/semver"
-
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/client"
 	"github.com/gravitational/teleport/api/client/proto"
@@ -1268,10 +1267,18 @@ func newKubeChecker(authContext Context) *kubeChecker {
 // in the server. Any clusters which aren't allowed will be removed from the
 // resource instead of an error being returned.
 func (k *kubeChecker) CanAccess(resource types.Resource) error {
-	server, ok := resource.(types.Server)
-	if !ok {
+	switch server := resource.(type) {
+	case types.Server:
+		return k.canAccessKubernetesLegacy(server)
+	case types.KubeServer:
+		return k.canAccessKubernetes(server)
+	default:
 		return trace.BadParameter("unexpected resource type %T", resource)
 	}
+
+}
+
+func (k *kubeChecker) canAccessKubernetesLegacy(server types.Server) error {
 
 	// Filter out agents that don't have support for moderated sessions access
 	// checking if the user has any roles that require it.
@@ -1317,6 +1324,44 @@ func (k *kubeChecker) CanAccess(resource types.Resource) error {
 	return nil
 }
 
+func (k *kubeChecker) canAccessKubernetes(server types.KubeServer) error {
+
+	// Filter out agents that don't have support for moderated sessions access
+	// checking if the user has any roles that require it.
+	if k.localUser {
+		roles := k.checker.Roles()
+		agentVersion, versionErr := semver.NewVersion(server.GetTeleportVersion())
+
+		hasK8SRequirePolicy := func() bool {
+			for _, role := range roles {
+				for _, policy := range role.GetSessionRequirePolicies() {
+					if ContainsSessionKind(policy.Kinds, types.KubernetesSessionKind) {
+						return true
+					}
+				}
+			}
+			return false
+		}
+
+		if hasK8SRequirePolicy() && (versionErr != nil || agentVersion.LessThan(*MinSupportedModeratedSessionsVersion)) {
+			return trace.AccessDenied("cannot use moderated sessions with pre-v9 kubernetes agents")
+		}
+	}
+
+	kube := server.GetCluster()
+
+	if err := k.checker.CheckAccess(kube, services.AccessMFAParams{Verified: true}); err != nil {
+		if trace.IsAccessDenied(err) {
+			server.SetCluster(nil)
+			return nil
+		}
+
+		return trace.Wrap(err)
+	}
+
+	return nil
+}
+
 // newResourceAccessChecker creates a resourceAccessChecker for the provided resource type
 func (a *ServerWithRoles) newResourceAccessChecker(resource string) (resourceAccessChecker, error) {
 	switch resource {
@@ -1324,7 +1369,7 @@ func (a *ServerWithRoles) newResourceAccessChecker(resource string) (resourceAcc
 		return &resourceChecker{AccessChecker: a.context.Checker}, nil
 	case types.KindNode:
 		return newNodeChecker(a.context, a.authServer)
-	case types.KindKubeService:
+	case types.KindKubeService, types.KindKubeServer:
 		return newKubeChecker(a.context), nil
 	default:
 		return nil, trace.BadParameter("could not check access to resource type %s", resource)

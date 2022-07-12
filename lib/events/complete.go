@@ -281,6 +281,7 @@ loop:
 				desktopSessionEnd.DesktopName = fmt.Sprintf("%v (recovered)", e.DesktopName)
 
 			case *events.SessionStart:
+				sshSessionEnd.Metadata = e.Metadata
 				sshSessionEnd.Type = SessionEndEvent
 				sshSessionEnd.Code = SessionEndCode
 				sshSessionEnd.ClusterName = e.ClusterName

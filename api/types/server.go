@@ -335,9 +335,11 @@ func CombineLabels(static map[string]string, dynamic map[string]CommandLabelV2) 
 
 // GetKubernetesClusters returns the kubernetes clusters directly handled by this
 // server.
+// DEPRECATED, remove in 13.0
 func (s *ServerV2) GetKubernetesClusters() []*KubernetesCluster { return s.Spec.KubernetesClusters }
 
 // SetKubernetesClusters sets the kubernetes clusters handled by this server.
+// DEPRECATED, remove in 13.0
 func (s *ServerV2) SetKubernetesClusters(clusters []*KubernetesCluster) {
 	s.Spec.KubernetesClusters = clusters
 }

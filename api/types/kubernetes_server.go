@@ -66,8 +66,8 @@ func NewKubernetesServerV3(meta Metadata, spec KubernetesServerSpecV3) (*Kuberne
 	return s, nil
 }
 
-// NewAKubernetesServerV3FromCluster creates a new kubernetes server from the provided clusters.
-func NewAKubernetesServerV3FromCluster(cluster *KubernetesClusterV3, hostname, hostID string) (*KubernetesServerV3, error) {
+// NewKubernetesServerV3FromCluster creates a new kubernetes server from the provided clusters.
+func NewKubernetesServerV3FromCluster(cluster *KubernetesClusterV3, hostname, hostID string) (*KubernetesServerV3, error) {
 	return NewKubernetesServerV3(Metadata{
 		Name: cluster.GetName(),
 	}, KubernetesServerSpecV3{
