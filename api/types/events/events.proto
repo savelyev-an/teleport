@@ -2484,7 +2484,7 @@ message DatabaseSessionMalformedPacket {
     bytes Payload = 5 [ (gogoproto.jsontag) = "payload,omitempty" ];
 }
 
-// SessionRecordingAccess is emitted when a session is viewed in the web UI, allowing
+// SessionRecordingAccess is emitted when a session recording is accessed, allowing
 // session views to be included in the audit log
 message SessionRecordingAccess {
     // Metadata is a common event metadata.
