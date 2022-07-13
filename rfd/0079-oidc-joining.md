@@ -26,7 +26,7 @@ Users will need to be able to configure trust in an OP, and rules that determine
 
 ## Why
 
-This feature allows us to reduce the friction involved in adding many new nodes to Teleport on a variety of platforms. This is also more secure, as the user does not need to distribute a token which is liable to exfilitration.
+This feature reduces the friction involved in adding many new nodes to Teleport on a variety of platforms. This is also more secure, as the user does not need to distribute a token which is liable to exfilitration.
 
 Whilst multiple providers offer OIDC identities to workloads running on their platform, we will start by targetting GCP GCE since this represents a large portion of the market. However, the work towards this feature will also enable us to simply add other providers that support OIDC such as:
 
@@ -61,6 +61,10 @@ spec:
   issuer_url: https://accounts.google.com
   allow: claims.google.compute_engine.project_id == "my-project" && claims.google.compute_engine.instance_name == "an-instance"
 ```
+
+To allow the user to configure rules for what identities will be accepted, we will use the [Common Expression Language (CEL)](https://github.com/google/cel-spec). This allows a large degree of flexibility in the complexity of rules users can configure, but still allows simple expressions.
+
+Users must also configure the `issuer_url`. This must be a host on which there is a compliant `/.well-known/openid-configuration` endpoint.
 
 ### Node support
 
