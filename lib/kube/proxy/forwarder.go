@@ -1717,6 +1717,7 @@ func (f *Forwarder) newClusterSessionSameCluster(ctx authContext) (*clusterSessi
 	var endpoints []kubeClusterEndpoint
 
 	for _, s := range kubeServers {
+
 		kubeCluster := s.GetCluster()
 		if kubeCluster == nil || kubeCluster.GetName() != ctx.kubeCluster {
 			continue

@@ -192,10 +192,12 @@ func TestGetServerInfo(t *testing.T) {
 			ForwarderConfig: ForwarderConfig{
 				Clock:       clockwork.NewFakeClock(),
 				ClusterName: "kube-cluster",
+				HostID:      "server_uuid",
 			},
 			AccessPoint:          ap,
 			TLS:                  &tls.Config{},
 			ConnectedProxyGetter: reversetunnel.NewConnectedProxyGetter(),
+			GetRotation:          func(role types.SystemRole) (*types.Rotation, error) { return &types.Rotation{}, nil },
 		},
 		fwd: &Forwarder{
 			cfg: ForwarderConfig{},
@@ -208,6 +210,7 @@ func TestGetServerInfo(t *testing.T) {
 			Metadata: types.Metadata{
 				Name: "kube-cluster",
 			},
+			Spec: types.KubernetesClusterSpecV3{},
 		})
 		require.NoError(t, err)
 

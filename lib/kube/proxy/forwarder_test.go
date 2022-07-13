@@ -768,20 +768,20 @@ func TestNewClusterSessionDirect(t *testing.T) {
 	authCtx := mockAuthCtx(ctx, t, "kube-cluster", false)
 
 	// helper function to create kube services
-	newKubeServer := func(name, addr, kubeCluster string) (types.KubeServer, kubeClusterEndpoint) {
+	newKubeServer := func(serverID, addr, kubeCluster string) (types.KubeServer, kubeClusterEndpoint) {
 		cluster, err := types.NewKubernetesClusterV3(types.Metadata{
-			Name: name,
+			Name: kubeCluster,
 		},
 			types.KubernetesClusterSpecV3{})
 		require.NoError(t, err)
 		kubeService, err := types.NewKubernetesServerV3FromCluster(
 			cluster,
-			addr, name,
+			addr, serverID,
 		)
 		require.NoError(t, err)
 		kubeServiceEndpoint := kubeClusterEndpoint{
 			addr:     addr,
-			serverID: fmt.Sprintf("%s.%s", name, authCtx.teleportCluster.name),
+			serverID: fmt.Sprintf("%s", serverID),
 		}
 		return kubeService, kubeServiceEndpoint
 	}
@@ -797,6 +797,7 @@ func TestNewClusterSessionDirect(t *testing.T) {
 	// multiple kube services for kube cluster
 	publicKubeService, publicEndpoint := newKubeServer("public", "k8s.example.com", "kube-cluster")
 	tunnelKubeService, tunnelEndpoint := newKubeServer("tunnel", reversetunnel.LocalKubernetes, "kube-cluster")
+
 	f.cfg.CachingAuthClient = mockAccessPoint{
 		kubeServers: []types.KubeServer{publicKubeService, otherKubeService, tunnelKubeService, otherKubeService},
 	}
@@ -1027,7 +1028,7 @@ func (ap mockAccessPoint) GetAuthPreference(ctx context.Context) (types.AuthPref
 	return ap.authPref, nil
 }
 
-func (ap mockAccessPoint) GetKubeServers(ctx context.Context) ([]types.KubeServer, error) {
+func (ap mockAccessPoint) GetKubernetesServers(ctx context.Context) ([]types.KubeServer, error) {
 	return ap.kubeServers, nil
 }
 
