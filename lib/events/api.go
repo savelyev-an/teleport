@@ -538,8 +538,8 @@ const (
 	// is sent to Teleport.
 	DesktopClipboardSendEvent = "desktop.clipboard.send"
 
-	// SessionRecordingView is emitted when a session recording is viewed
-	SessionRecordingViewEvent = "session.recording.view"
+	// SessionRecordingAccess is emitted when a session recording is accessed
+	SessionRecordingAccessEvent = "session.recording.access"
 
 	// UnknownEvent is any event received that isn't recognized as any other event type.
 	UnknownEvent = apievents.UnknownEvent

@@ -2025,7 +2025,7 @@ message OneOf {
         events.SQLServerRPCRequest SQLServerRPCRequest = 89;
         events.DatabaseSessionMalformedPacket DatabaseSessionMalformedPacket = 90;
         events.SFTP SFTP = 91;
-        events.SessionRecordingView SessionRecordingView = 92;
+        events.SessionRecordingAccess SessionRecordingAccess = 92;
     }
 }
 
@@ -2484,9 +2484,9 @@ message DatabaseSessionMalformedPacket {
     bytes Payload = 5 [ (gogoproto.jsontag) = "payload,omitempty" ];
 }
 
-// SessionRecordingView is emitted when a session is viewed in the web UI, allowing
+// SessionRecordingAccess is emitted when a session is viewed in the web UI, allowing
 // session views to be included in the audit log
-message SessionRecordingView {
+message SessionRecordingAccess {
     // Metadata is a common event metadata.
     Metadata Metadata = 1
         [ (gogoproto.nullable) = false, (gogoproto.embed) = true, (gogoproto.jsontag) = "" ];

@@ -399,9 +399,9 @@ func ToOneOf(in AuditEvent) (*OneOf, error) {
 		out.Event = &OneOf_SFTP{
 			SFTP: e,
 		}
-	case *SessionRecordingView:
-		out.Event = &OneOf_SessionRecordingView{
-			SessionRecordingView: e,
+	case *SessionRecordingAccess:
+		out.Event = &OneOf_SessionRecordingAccess{
+			SessionRecordingAccess: e,
 		}
 	case *Unknown:
 		out.Event = &OneOf_Unknown{
