@@ -16,6 +16,7 @@ state: draft
 - OIDC: OpenID Connect. A federated authentication protocol built on top of OAuth 2.0.
 - OP: OpenID Provider.
 - Issuer: an OP that has issued a specific token.
+- Workload Identity: an identity corresponding to a running workload, such as a container or VM. This is in contrast to the more well-known use of OAuth in identifying users. A workload identity token is often made available to a workload running on a platform via a metadata server or an environment variable.
 
 ## What
 
@@ -35,7 +36,35 @@ Whilst multiple providers offer OIDC identities to workloads running on their pl
 
 ## Details
 
-### Configuration
+The work on OIDC joining is broken down into two parts:
+
+- Support in the Auth server for trusting an OP issued JWT. This work is general, and will be applicable to all providers.
+- Support in nodes for fetching their workload identity token from their environment. This work will be specific to each platform we intend to support.
+
+OIDC supports multiple types of token (`id_token`: a JWT encoding information about the identity, which can be verified using the issuer's public key and `access_token`: an opaque token that can be used with a `userinfo` endpoint on the issuer to obtain information about the identity). However, in the case of workload identities, `id_token` is the most prevelant. For this reason, our initial implementation will solely support `id_token`.
+
+### Auth server support
+
+#### Configuration
+
+We will leverage the existing Token configuration kind as used by static tokens and IAM joining:
+
+```yaml
+kind: token
+version: v2
+metadata:
+  name: my-gce-token
+  expires: "3000-01-01T00:00:00Z"
+spec:
+  roles: [Node]
+  join_method: oidc-jwt
+  issuer_url: https://accounts.google.com
+  allow: claims.google.compute_engine.project_id == "my-project" && claims.google.compute_engine.instance_name == "an-instance"
+```
+
+### Node support
+
+Node here not only refers to a Teleport node, but also to a `tbot` instance.
 
 ### Security Considerations
 
@@ -54,13 +83,24 @@ Then a malicious actor would be able to create their own GCP project, create an 
 It is imperative that users include some rule that filters it to their own project e.g:
 
 ```go
-claims.compute_engine.project_id == "my-project" && claims.google.compute_engine.instance_name == "an-instance
+claims.google.compute_engine.project_id == "my-project" && claims.google.compute_engine.instance_name == "an-instance"
+```
+
+or that they restrict it to a specific subject (as this will be unique to the issuer):
+
+```go
+claims.sub == "777666555444333222111"
 ```
 
 #### MITM of the connection to the issuer
 
-In order to verify the JWT, we have to fetch the public key from the issuers's JWKS endpoint. If this connection is not secured (e.g HTTPS), it would be possible for a malicious actor to return a public key they've used to sign the JWT with.
+In order to verify the JWT, we have to fetch the public key from the issuers's JWKS endpoint. If this connection is not secured (e.g HTTPS), it would be possible for a malicious actor to intercept the request and return a public key they've used to sign the JWT with.
 
 We should require that the configured issuer URL is HTTPS to mitigate this.
 
 ## References and Resources
+
+Similar implementations:
+
+- [GCP Workload identity federation](https://cloud.google.com/iam/docs/workload-identity-federation)
+- [HashiCorp Vault](https://www.vaultproject.io/docs/auth/jwt)
