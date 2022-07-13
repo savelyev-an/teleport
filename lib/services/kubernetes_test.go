@@ -17,7 +17,6 @@ limitations under the License.
 package services
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/gravitational/teleport/api/types"
@@ -33,6 +32,9 @@ func TestKubernetesServerUnmarshal(t *testing.T) {
 		Description: "Test description",
 		Labels:      map[string]string{"env": "dev"},
 	}, types.KubernetesServerSpecV3{
+		Version:  "v3",
+		HostID:   "host_id",
+		Hostname: "",
 		Cluster: &types.KubernetesClusterV3{
 			Metadata: types.Metadata{
 				Name:        "test-cluster",
@@ -44,7 +46,7 @@ func TestKubernetesServerUnmarshal(t *testing.T) {
 	require.NoError(t, err)
 	data, err := utils.ToJSON([]byte(kubeServerYAML))
 	require.NoError(t, err)
-	actual, err := UnmarshalApp(data)
+	actual, err := UnmarshalKubeServer(data)
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 }
@@ -56,8 +58,9 @@ func TestKubernetesServerMarshal(t *testing.T) {
 		Description: "Test description",
 		Labels:      map[string]string{"env": "dev"},
 	}, types.KubernetesServerSpecV3{
-		Version: "v3",
-
+		Version:  "v3",
+		HostID:   "host_id",
+		Hostname: "",
 		Cluster: &types.KubernetesClusterV3{
 			Metadata: types.Metadata{
 				Name:        "test-cluster",
@@ -68,19 +71,39 @@ func TestKubernetesServerMarshal(t *testing.T) {
 	})
 	require.NoError(t, err)
 	data, err := MarshalKubeServer(expected)
-	fmt.Println(string(data))
 	require.NoError(t, err)
-	actual, err := UnmarshalApp(data)
+	actual, err := UnmarshalKubeServer(data)
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 }
 
-var kubeServerYAML = `kind: app
+var kubeServerYAML = `---
+kind: kube_server
 version: v3
 metadata:
-  name: test-app
-  description: "Test description"
+  name: test-kube
+  description: Test description
   labels:
     env: dev
 spec:
-  uri: "http://localhost:8080"`
+  version: v3
+  hostname: ''
+  host_id: host_id
+  rotation:
+    current_id: ''
+    started: '0001-01-01T00:00:00Z'
+    last_rotated: '0001-01-01T00:00:00Z'
+    schedule:
+      update_clients: '0001-01-01T00:00:00Z'
+      update_servers: '0001-01-01T00:00:00Z'
+      standby: '0001-01-01T00:00:00Z'
+  cluster:
+    kind: kube_cluster
+    version: v3
+    metadata:
+      name: test-cluster
+      description: Test description
+      labels:
+        env: dev
+    spec: {}
+`

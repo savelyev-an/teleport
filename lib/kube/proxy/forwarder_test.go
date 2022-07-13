@@ -20,7 +20,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -781,7 +780,7 @@ func TestNewClusterSessionDirect(t *testing.T) {
 		require.NoError(t, err)
 		kubeServiceEndpoint := kubeClusterEndpoint{
 			addr:     addr,
-			serverID: fmt.Sprintf("%s", serverID),
+			serverID: serverID,
 		}
 		return kubeService, kubeServiceEndpoint
 	}
