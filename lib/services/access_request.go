@@ -1504,7 +1504,7 @@ func MapResourceKindToListResourcesType(kind string) string {
 	case types.KindDatabase:
 		return types.KindDatabaseServer
 	case types.KindKubernetesCluster:
-		return types.KindKubeService
+		return types.KindKubeServer
 	default:
 		return kind
 	}

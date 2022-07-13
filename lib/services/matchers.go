@@ -88,7 +88,7 @@ func MatchResourceByFilters(resource types.ResourceWithLabels, filter MatchResou
 		specResource = resource
 		resourceKey.name = specResource.GetName()
 
-	case types.KindKubeService:
+	case types.KindKubeService, types.KindKubeServer:
 		if seenMap != nil {
 			return false, trace.BadParameter("checking for duplicate matches for resource kind %q is not supported", filter.ResourceKind)
 		}

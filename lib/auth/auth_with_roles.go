@@ -857,10 +857,20 @@ func (a *ServerWithRoles) KeepAliveServer(ctx context.Context, handle types.Keep
 			return trace.Wrap(err)
 		}
 	case constants.KeepAliveKube:
-		if serverName != handle.Name || !a.hasBuiltinRole(types.RoleKube) {
+		if handle.HostID != "" {
+			if serverName != handle.HostID {
+				return trace.AccessDenied("access denied")
+			}
+		} else { // DELETE IN 13.0. Legacy kubeservice server is heartbeating back.
+			if serverName != handle.Name {
+				return trace.AccessDenied("access denied")
+			}
+		}
+
+		if !a.hasBuiltinRole(types.RoleKube) {
 			return trace.AccessDenied("access denied")
 		}
-		if err := a.action(apidefaults.Namespace, types.KindKubeService, types.VerbUpdate); err != nil {
+		if err := a.action(apidefaults.Namespace, types.KindKubeServer, types.VerbUpdate); err != nil {
 			return trace.Wrap(err)
 		}
 	default:
@@ -929,8 +939,8 @@ func (a *ServerWithRoles) NewWatcher(ctx context.Context, watch types.Watch) (ty
 			if err := a.action(apidefaults.Namespace, types.KindDatabaseServer, types.VerbRead); err != nil {
 				return nil, trace.Wrap(err)
 			}
-		case types.KindKubeService:
-			if err := a.action(apidefaults.Namespace, types.KindKubeService, types.VerbRead); err != nil {
+		case types.KindKubeServer:
+			if err := a.action(apidefaults.Namespace, types.KindKubeServer, types.VerbRead); err != nil {
 				return nil, trace.Wrap(err)
 			}
 		case types.KindWindowsDesktopService:
@@ -1112,7 +1122,7 @@ func (a *ServerWithRoles) ListResources(ctx context.Context, req proto.ListResou
 		//   https://github.com/gravitational/teleport/pull/1224
 		actionVerbs = []string{types.VerbList}
 
-	case types.KindDatabaseServer, types.KindAppServer, types.KindKubeService, types.KindWindowsDesktop:
+	case types.KindDatabaseServer, types.KindAppServer, types.KindKubeService, types.KindKubeServer, types.KindWindowsDesktop:
 
 	default:
 		return nil, trace.NotImplemented("resource type %s does not support pagination", req.ResourceType)

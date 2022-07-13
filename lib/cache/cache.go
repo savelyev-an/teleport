@@ -246,6 +246,7 @@ func ForKubernetes(cfg Config) Config {
 		{Kind: types.KindRole},
 		{Kind: types.KindNamespace, Name: apidefaults.Namespace},
 		{Kind: types.KindKubeService},
+		{Kind: types.KindKubeServer},
 	}
 	cfg.QueueSize = defaults.KubernetesQueueSize
 	return cfg
