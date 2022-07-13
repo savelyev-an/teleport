@@ -40,6 +40,7 @@ import (
 	apievents "github.com/gravitational/teleport/api/types/events"
 	"github.com/gravitational/teleport/lib/auth"
 	"github.com/gravitational/teleport/lib/bpf"
+	"github.com/gravitational/teleport/lib/cloud"
 	"github.com/gravitational/teleport/lib/defaults"
 	"github.com/gravitational/teleport/lib/events"
 	"github.com/gravitational/teleport/lib/inventory"
@@ -52,7 +53,6 @@ import (
 	"github.com/gravitational/teleport/lib/services/local"
 	rsession "github.com/gravitational/teleport/lib/session"
 	"github.com/gravitational/teleport/lib/srv"
-	"github.com/gravitational/teleport/lib/srv/db/common"
 	"github.com/gravitational/teleport/lib/srv/server"
 	"github.com/gravitational/teleport/lib/sshutils"
 	"github.com/gravitational/teleport/lib/sshutils/x11"
@@ -223,7 +223,7 @@ type Server struct {
 	// awsMatchers are used to match EC2 instances
 	awsMatchers []services.AWSMatcher
 	// cloudClients are clients used for fetching cloud resources
-	cloudClients common.CloudClients
+	cloudClients cloud.Clients
 }
 
 // GetClock returns server clock implementation
@@ -794,7 +794,7 @@ func New(addr utils.NetAddr,
 	}
 
 	if len(s.awsMatchers) != 0 {
-		s.cloudClients = common.NewCloudClients()
+		s.cloudClients = cloud.NewCloudClients()
 		s.cloudWatcher, err = server.NewCloudServerWatcher(s.ctx, s.awsMatchers, s.cloudClients)
 		if err != nil {
 			return nil, trace.Wrap(err)

@@ -25,13 +25,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/gravitational/teleport/api/utils"
+	"github.com/gravitational/teleport/lib/cloud"
 	"github.com/gravitational/teleport/lib/services"
-	"github.com/gravitational/teleport/lib/srv/db/common"
 	"github.com/stretchr/testify/require"
 )
 
 type mockClients struct {
-	common.CloudClients
+	cloud.Clients
 
 	ec2Client *mockEC2Client
 }
@@ -126,7 +126,7 @@ func TestEC2Watcher(t *testing.T) {
 	watcher, err := NewCloudServerWatcher(ctx, matchers, &clients)
 	require.NoError(t, err)
 
-	go watcher.Start()
+	go watcher.Run()
 
 	result := <-watcher.Instances
 	require.Equal(t, EC2Instances{

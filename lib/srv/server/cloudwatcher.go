@@ -25,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/cloudflare/cfssl/log"
 	"github.com/gravitational/teleport/api/types"
+	"github.com/gravitational/teleport/lib/cloud"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/srv/db/common"
 	"github.com/gravitational/trace"
@@ -46,7 +47,7 @@ type Watcher struct {
 	cancel   context.CancelFunc
 }
 
-func (w *Watcher) Start() {
+func (w *Watcher) Run() {
 	ticker := time.NewTicker(w.waitTime)
 	for {
 		for _, fetcher := range w.fetchers {
@@ -70,7 +71,7 @@ func (w *Watcher) Stop() {
 	w.cancel()
 }
 
-func NewCloudServerWatcher(ctx context.Context, matchers []services.AWSMatcher, clients common.CloudClients) (*Watcher, error) {
+func NewCloudServerWatcher(ctx context.Context, matchers []services.AWSMatcher, clients cloud.Clients) (*Watcher, error) {
 	cancelCtx, cancelFn := context.WithCancel(ctx)
 	watcher := Watcher{
 		fetchers:  []*ec2InstanceFetcher{},
@@ -85,7 +86,7 @@ func NewCloudServerWatcher(ctx context.Context, matchers []services.AWSMatcher, 
 			if err != nil {
 				return nil, trace.Wrap(err)
 			}
-			fetcher, err :=
+			fetcher :=
 				newEc2InstanceFetcher(matcher, region, matcher.SSMDocument, cl, matcher.Tags)
 			if err != nil {
 				return nil, trace.Wrap(err)
@@ -104,7 +105,7 @@ type ec2InstanceFetcher struct {
 }
 
 func newEc2InstanceFetcher(matcher services.AWSMatcher, region, document string,
-	ec2Client ec2iface.EC2API, labels types.Labels) (*ec2InstanceFetcher, error) {
+	ec2Client ec2iface.EC2API, labels types.Labels) *ec2InstanceFetcher {
 	tagFilters := make([]*ec2.Filter, 0, len(labels)+1)
 	tagFilters = append(tagFilters, &ec2.Filter{
 		Name:   aws.String("instance-state-name"),
@@ -122,7 +123,7 @@ func newEc2InstanceFetcher(matcher services.AWSMatcher, region, document string,
 		Region:   region,
 		Document: document,
 	}
-	return &fetcherConfig, nil
+	return &fetcherConfig
 }
 
 func (f *ec2InstanceFetcher) GetEC2Instances(ctx context.Context) (*EC2Instances, error) {
@@ -146,40 +147,4 @@ func (f *ec2InstanceFetcher) GetEC2Instances(ctx context.Context) (*EC2Instances
 		Document:  f.Document,
 		Instances: instances,
 	}, nil
-}
-
-func ec2TagsToLabels(tags []*ec2.Tag) map[string]string {
-	labels := make(map[string]string)
-	for _, tag := range tags {
-		key := aws.StringValue(tag.Key)
-		if types.IsValidLabelKey(key) {
-			labels[key] = aws.StringValue(tag.Value)
-		} else {
-			log.Debugf("Skipping EC2 tag %q, not a valid label key", key)
-		}
-	}
-	return labels
-}
-
-type ec2Filter func(*ec2.Instance) (*ec2.Instance, error)
-
-func filterByStateRunning(instance *ec2.Instance) (*ec2.Instance, error) {
-	if aws.StringValue(instance.State.Name) == ec2.InstanceStateNameRunning {
-		return instance, nil
-	}
-	return nil, nil
-}
-
-func filterByLabels(labels types.Labels) ec2Filter {
-	return func(instance *ec2.Instance) (*ec2.Instance, error) {
-		instanceLabels := ec2TagsToLabels(instance.Tags)
-		match, _, err := services.MatchLabels(labels, instanceLabels)
-		if err != nil {
-			return nil, trace.Wrap(err)
-		}
-		if !match {
-			return nil, nil
-		}
-		return instance, nil
-	}
 }
