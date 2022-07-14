@@ -18,6 +18,9 @@ package auth
 
 import (
 	"context"
+	"io"
+	"net"
+	"net/http"
 	"net/url"
 	"testing"
 	"time"
@@ -28,6 +31,7 @@ import (
 	"github.com/gravitational/teleport/lib/backend/memory"
 	"github.com/gravitational/teleport/lib/events"
 	"github.com/gravitational/teleport/lib/events/eventstest"
+	"github.com/gravitational/teleport/lib/modules"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/stretchr/testify/require"
 
@@ -280,4 +284,74 @@ func TestCalculateGithubUserNoTeams(t *testing.T) {
 		Teams: []string{"team1", "team2", "team1"},
 	}, &types.GithubAuthRequest{})
 	require.ErrorIs(t, err, ErrGithubNoTeams)
+}
+
+type mockHTTPRequester struct {
+	succeed    bool
+	statusCode int
+}
+
+func (m mockHTTPRequester) Do(req *http.Request) (*http.Response, error) {
+	if !m.succeed {
+		return nil, &url.Error{
+			URL: req.URL.String(),
+			Err: &net.DNSError{
+				IsTimeout: true,
+			},
+		}
+	}
+
+	resp := new(http.Response)
+	resp.Body = io.NopCloser(nil)
+	resp.StatusCode = m.statusCode
+
+	return resp, nil
+}
+
+func TestCheckGithubFeatureSupport(t *testing.T) {
+	connector, err := types.NewGithubConnector("github", types.GithubConnectorSpecV3{
+		TeamsToRoles: []types.TeamRolesMapping{
+			{
+				Organization: "org",
+				Team:         "team",
+				Roles:        []string{"role"},
+			},
+		},
+	})
+	require.NoError(t, err)
+	client := mockHTTPRequester{
+		succeed:    true,
+		statusCode: 200,
+	}
+
+	// Test org having external SSO
+	err = checkGithubFeatureSupport(connector, client)
+	require.Error(t, err)
+	require.True(t, trace.IsAccessDenied(err))
+
+	// Test org not having external SSO
+	client.statusCode = 404
+	err = checkGithubFeatureSupport(connector, client)
+	require.NoError(t, err)
+
+	// Test retrying the check in case of network failures
+	client.succeed = false
+	err = checkGithubFeatureSupport(connector, client)
+	require.Error(t, err)
+	require.True(t, trace.IsConnectionProblem(err))
+
+	// Test that no errors will be returned when Teleport Enterprise is
+	// being used
+	modules.SetTestModules(t, &modules.TestModules{
+		TestBuildType: modules.BuildEnterprise,
+	})
+
+	client.succeed = true
+	client.statusCode = 200
+	err = checkGithubFeatureSupport(connector, client)
+	require.NoError(t, err)
+
+	client.succeed = false
+	err = checkGithubFeatureSupport(connector, client)
+	require.NoError(t, err)
 }
