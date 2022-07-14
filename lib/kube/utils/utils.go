@@ -19,7 +19,6 @@ package utils
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
 
 	"github.com/gravitational/teleport/api/client"
 	"github.com/gravitational/teleport/api/client/proto"
@@ -269,10 +268,9 @@ func CheckOrSetKubeCluster(ctx context.Context, p KubeServicesPresence, kubeClus
 	if err != nil {
 		return "", trace.Wrap(err)
 	}
-	fmt.Println(kubeClusterNames)
 	if kubeClusterName != "" {
 		if !apiutils.SliceContainsStr(kubeClusterNames, kubeClusterName) {
-			return "", trace.BadParameter("2kubernetes cluster %q is not registered in this teleport cluster; you can list registered kubernetes clusters using 'tsh kube ls'", kubeClusterName)
+			return "", trace.BadParameter("kubernetes cluster %q is not registered in this teleport cluster; you can list registered kubernetes clusters using 'tsh kube ls'", kubeClusterName)
 		}
 		return kubeClusterName, nil
 	}
