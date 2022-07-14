@@ -799,7 +799,7 @@ func (rc *ResourceCommand) Delete(ctx context.Context, client auth.ClientI) (err
 		if err != nil {
 			return trace.Wrap(err)
 		}
-		fmt.Printf("%s has been deleted\n", types.KindInstaller)
+		fmt.Printf("%s has been reset to a default value\n", types.KindInstaller)
 	default:
 		return trace.BadParameter("deleting resources of type %q is not supported", rc.ref.Kind)
 	}

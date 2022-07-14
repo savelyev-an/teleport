@@ -42,6 +42,7 @@ import (
 	apidefaults "github.com/gravitational/teleport/api/defaults"
 	"github.com/gravitational/teleport/api/types"
 	apievents "github.com/gravitational/teleport/api/types/events"
+	"github.com/gravitational/teleport/api/types/installers"
 	apiutils "github.com/gravitational/teleport/api/utils"
 	apisshutils "github.com/gravitational/teleport/api/utils/sshutils"
 	"github.com/gravitational/teleport/lib/auth"
@@ -190,6 +191,8 @@ type Config struct {
 
 	// ProxySettings allows fetching the current proxy settings.
 	ProxySettings proxySettingsGetter
+
+	Installer installers.InstallerTemplate
 }
 
 type APIHandler struct {
@@ -1372,11 +1375,12 @@ func (h *Handler) installer(w http.ResponseWriter, r *http.Request, p httprouter
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
-	_, err = w.Write([]byte(installer.GetScript()))
+	instTmpl, err := template.New("").Parse(installer.GetScript())
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
-	return nil, nil
+	err = instTmpl.Execute(w, h.cfg.Installer)
+	return nil, trace.Wrap(err)
 }
 
 // AuthParams are used to construct redirect URL containing auth

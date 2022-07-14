@@ -49,6 +49,7 @@ import (
 	apidefaults "github.com/gravitational/teleport/api/defaults"
 	"github.com/gravitational/teleport/api/types"
 	apievents "github.com/gravitational/teleport/api/types/events"
+	"github.com/gravitational/teleport/api/types/installers"
 	apiutils "github.com/gravitational/teleport/api/utils"
 	"github.com/gravitational/teleport/lib/auth"
 	"github.com/gravitational/teleport/lib/auth/native"
@@ -3382,6 +3383,9 @@ func (process *TeleportProcess) initProxyEndpoint(conn *Connector) error {
 				StaticFS:         fs,
 				ClusterFeatures:  process.getClusterFeatures(),
 				ProxySettings:    proxySettings,
+				Installer: installers.InstallerTemplate{
+					AuthServer: process.proxyPublicAddr().Addr,
+				},
 			})
 		if err != nil {
 			return trace.Wrap(err)

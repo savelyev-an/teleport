@@ -23,6 +23,7 @@ import (
 
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/types"
+	"github.com/gravitational/teleport/api/types/installers"
 	"github.com/gravitational/teleport/lib/backend"
 	"github.com/gravitational/teleport/lib/modules"
 	"github.com/gravitational/teleport/lib/services"
@@ -385,9 +386,9 @@ func (s *ClusterConfigurationService) SetInstaller(ctx context.Context, ins type
 	return trace.Wrap(err)
 }
 
-// DeleteInstaller deletes the installer script from the backend.
+// DeleteInstaller sets the installer script to default script in the backend.
 func (s *ClusterConfigurationService) DeleteInstaller(ctx context.Context) error {
-	err := s.Delete(ctx, backend.Key(clusterConfigPrefix, installerScriptPrefix))
+	err := s.SetInstaller(ctx, installers.DefaultInstaller)
 	if err != nil {
 		return trace.Wrap(err)
 	}

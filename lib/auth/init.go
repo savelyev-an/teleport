@@ -29,6 +29,7 @@ import (
 	apidefaults "github.com/gravitational/teleport/api/defaults"
 	"github.com/gravitational/teleport/api/types"
 	apievents "github.com/gravitational/teleport/api/types/events"
+	"github.com/gravitational/teleport/api/types/installers"
 	apiutils "github.com/gravitational/teleport/api/utils"
 	apisshutils "github.com/gravitational/teleport/api/utils/sshutils"
 	"github.com/gravitational/teleport/lib"
@@ -274,6 +275,10 @@ func Init(cfg InitConfig, opts ...ServerOption) (*Server, error) {
 		return nil, trace.Wrap(err)
 	}
 
+	if err := initSetDefaultInstaller(ctx, asrv); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
 	// The first Auth Server that starts gets to set the name of the cluster.
 	// If a cluster name/ID is already stored in the backend, the attempt to set
 	// a new name returns an AlreadyExists error.
@@ -406,6 +411,18 @@ func Init(cfg InitConfig, opts ...ServerOption) (*Server, error) {
 	}
 
 	return asrv, nil
+}
+
+func initSetDefaultInstaller(ctx context.Context, asrv *Server) error {
+	_, err := asrv.GetInstaller(ctx)
+	if err != nil {
+		if trace.IsNotFound(err) {
+			err = asrv.SetInstaller(ctx, installers.DefaultInstaller)
+			return trace.Wrap(err)
+		}
+		return trace.Wrap(err)
+	}
+	return nil
 }
 
 func initSetAuthPreference(ctx context.Context, asrv *Server, newAuthPref types.AuthPreference) error {
