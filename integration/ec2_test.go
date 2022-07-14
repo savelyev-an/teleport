@@ -380,7 +380,7 @@ func TestEC2Labels(t *testing.T) {
 	var nodes []types.Server
 	var apps []types.AppServer
 	var databases []types.DatabaseServer
-	var kubes []types.Server
+	var kubes []types.KubeServer
 
 	// Wait for everything to come online.
 	require.Eventually(t, func() bool {
@@ -391,7 +391,7 @@ func TestEC2Labels(t *testing.T) {
 		require.NoError(t, err)
 		databases, err = authServer.GetDatabaseServers(ctx, tconf.SSH.Namespace)
 		require.NoError(t, err)
-		kubes, err = authServer.GetKubeServices(ctx)
+		kubes, err = authServer.GetKubernetesServers(ctx)
 		require.NoError(t, err)
 		return len(nodes) == 1 && len(apps) == 1 && len(databases) == 1 && len(kubes) == 1
 	}, 10*time.Second, time.Second)
