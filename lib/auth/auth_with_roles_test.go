@@ -2607,22 +2607,6 @@ func TestGetAndList_KubernetesServers(t *testing.T) {
 	ctx := context.Background()
 	srv := newTestTLSServer(t)
 
-	// Create test kube services.
-	for i := 0; i < 5; i++ {
-		// insert legacy kube servers
-		// DELETE in 13.0
-		name := uuid.NewString()
-		s, err := types.NewServerWithLabels(name, types.KindKubeService, types.ServerSpecV2{
-			KubernetesClusters: []*types.KubernetesCluster{
-				{Name: name, StaticLabels: map[string]string{"name": name}},
-			},
-		}, map[string]string{"name": name})
-		require.NoError(t, err)
-
-		_, err = srv.Auth().UpsertKubeServiceV2(ctx, s)
-		require.NoError(t, err)
-	}
-
 	// Create test kube servers.
 	for i := 0; i < 5; i++ {
 		// insert legacy kube servers
@@ -2641,6 +2625,7 @@ func TestGetAndList_KubernetesServers(t *testing.T) {
 			},
 
 			types.KubernetesServerSpecV3{
+				HostID:  name,
 				Cluster: cluster,
 			},
 		)
@@ -2652,7 +2637,7 @@ func TestGetAndList_KubernetesServers(t *testing.T) {
 
 	testServers, err := srv.Auth().GetKubernetesServers(ctx)
 	require.NoError(t, err)
-	require.Len(t, testServers, 10)
+	require.Len(t, testServers, 5)
 
 	testResources := make([]types.ResourceWithLabels, len(testServers))
 	for i, server := range testServers {
@@ -2671,7 +2656,7 @@ func TestGetAndList_KubernetesServers(t *testing.T) {
 		Namespace: defaults.Namespace,
 		// Guarantee that the list will all the servers.
 		Limit:        int32(len(testServers) + 1),
-		ResourceType: types.KindKubeService,
+		ResourceType: types.KindKubeServer,
 	}
 
 	// permit user to get all kubernetes service
@@ -2690,7 +2675,7 @@ func TestGetAndList_KubernetesServers(t *testing.T) {
 	baseRequest := proto.ListResourcesRequest{
 		Namespace:    defaults.Namespace,
 		Limit:        int32(len(testServers) + 1),
-		ResourceType: types.KindKubeService,
+		ResourceType: types.KindKubeServer,
 	}
 
 	// Test label match.
