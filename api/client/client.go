@@ -965,7 +965,7 @@ func (c *Client) DeleteSemaphore(ctx context.Context, filter types.SemaphoreFilt
 	return trail.FromGRPC(err)
 }
 
-// GetKubeServers returns the list of kubernetes servers registered in the
+// GetKubernetesServers returns the list of kubernetes servers registered in the
 // cluster.
 func (c *Client) GetKubernetesServers(ctx context.Context) ([]types.KubeServer, error) {
 	resources, err := GetResourcesWithFilters(ctx, c, proto.ListResourcesRequest{
@@ -975,7 +975,7 @@ func (c *Client) GetKubernetesServers(ctx context.Context) ([]types.KubeServer, 
 	if err != nil {
 		// Underlying ListResources for kube server was not available, use fallback.
 		// ListResources returns NotImplemented if ResourceType is unknown.
-		// DELETE IN 11.0.0
+		// DELETE IN 13.0.0
 		if trace.IsNotImplemented(err) {
 			return c.getKubeServersFallback(ctx)
 		}
@@ -990,7 +990,7 @@ func (c *Client) GetKubernetesServers(ctx context.Context) ([]types.KubeServer, 
 
 	// Underlying ListResources for kube server was not available, use fallback.
 	// ListResources returns NotImplemented if ResourceType is unknown.
-	// DELETE IN 11.0.0
+	// DELETE IN 13.0.0
 	kubeservers, err := c.getKubeServersFallback(ctx)
 	if err != nil {
 		return nil, trace.Wrap(err)

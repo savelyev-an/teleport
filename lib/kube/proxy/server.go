@@ -154,6 +154,7 @@ func NewTLSServer(cfg TLSServerConfig) (*TLSServer, error) {
 		(cfg.KubeServiceType == LegacyProxyService && len(fwd.kubeClusters()) > 0) {
 		log.Debugf("Starting kubernetes_service heartbeats for %q", cfg.Component)
 		for _, cluster := range fwd.kubeClusters() {
+
 			if err := server.startHeartbeat(server.closeContext, cluster); err != nil {
 				return nil, trace.Wrap(err)
 			}
@@ -234,7 +235,7 @@ func (t *TLSServer) getServerInfo(cluster types.KubeCluster) (types.Resource, er
 	//
 	// Note: we *don't* want to add suffix for kubernetes_service!
 	// This breaks reverse tunnel routing, which uses server.Name.
-	name := cluster.GetName()
+	name := t.HostID
 	if t.KubeServiceType != KubeService {
 		name += "-proxy_service"
 	}
@@ -262,10 +263,6 @@ func (t *TLSServer) getServerInfo(cluster types.KubeCluster) (types.Resource, er
 
 // startHeartbeat starts the registration heartbeat to the auth server.
 func (t *TLSServer) startHeartbeat(ctx context.Context, kubeCluster types.KubeCluster) error {
-	if t.KubeServiceType != KubeService ||
-		(t.KubeServiceType != LegacyProxyService && len(t.fwd.kubeClusters()) > 0) {
-		return nil
-	}
 
 	heartbeat, err := srv.NewHeartbeat(srv.HeartbeatConfig{
 

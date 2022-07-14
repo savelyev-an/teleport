@@ -638,6 +638,57 @@ func (c *netRestrictionsCollection) writeText(w io.Writer) error {
 	return trace.Wrap(out.err)
 }
 
+type kubernetesServerCollection struct {
+	servers []types.KubeServer
+	verbose bool
+}
+
+func (c *kubernetesServerCollection) resources() (r []types.Resource) {
+	for _, resource := range c.servers {
+		r = append(r, resource)
+	}
+	return r
+}
+
+func (c *kubernetesServerCollection) writeText(w io.Writer) error {
+	var rows [][]string
+	for _, server := range c.servers {
+		labels := stripInternalTeleportLabels(c.verbose, server.GetCluster().GetAllLabels())
+		rows = append(rows, []string{
+			server.GetHostname(),
+			server.GetCluster().GetName(),
+			labels,
+			server.GetTeleportVersion(),
+		})
+	}
+	headers := []string{"Host", "Name", "Labels", "Version"}
+	var t asciitable.Table
+	if c.verbose {
+		t = asciitable.MakeTable(headers, rows...)
+	} else {
+		t = asciitable.MakeTableWithTruncatedColumn(headers, rows, "Labels")
+	}
+	_, err := t.AsBuffer().WriteTo(w)
+	return trace.Wrap(err)
+}
+
+func (c *kubernetesServerCollection) writeJSON(w io.Writer) error {
+	data, err := json.MarshalIndent(c.toMarshal(), "", "    ")
+	if err != nil {
+		return trace.Wrap(err)
+	}
+	_, err = w.Write(data)
+	return trace.Wrap(err)
+}
+
+func (c *kubernetesServerCollection) toMarshal() interface{} {
+	return c.servers
+}
+
+func (c *kubernetesServerCollection) writeYAML(w io.Writer) error {
+	return utils.WriteYAML(w, c.toMarshal())
+}
+
 type databaseServerCollection struct {
 	servers []types.DatabaseServer
 	verbose bool

@@ -1463,6 +1463,7 @@ func setupImpersonationHeaders(log log.FieldLogger, ctx authContext, headers htt
 
 // catchAll forwards all HTTP requests to the target k8s API server
 func (f *Forwarder) catchAll(ctx *authContext, w http.ResponseWriter, req *http.Request) (interface{}, error) {
+
 	sess, err := f.newClusterSession(*ctx)
 	if err != nil {
 		// This error goes to kubernetes client and is not visible in the logs
@@ -1489,7 +1490,6 @@ func (f *Forwarder) catchAll(ctx *authContext, w http.ResponseWriter, req *http.
 	if sess.noAuditEvents {
 		return nil, nil
 	}
-
 	// Emit audit event.
 	event := &apievents.KubeRequest{
 		Metadata: apievents.Metadata{
@@ -1715,7 +1715,6 @@ func (f *Forwarder) newClusterSessionSameCluster(ctx authContext) (*clusterSessi
 
 	// Validate that the requested kube cluster is registered.
 	var endpoints []kubeClusterEndpoint
-
 	for _, s := range kubeServers {
 
 		kubeCluster := s.GetCluster()
@@ -1725,7 +1724,7 @@ func (f *Forwarder) newClusterSessionSameCluster(ctx authContext) (*clusterSessi
 
 		// TODO(awly): check RBAC
 		endpoints = append(endpoints, kubeClusterEndpoint{
-			serverID: s.GetHostID(),
+			serverID: fmt.Sprintf("%s.%s", s.GetName(), ctx.teleportCluster.name),
 			addr:     s.GetHostname(),
 			proxyIDs: s.GetProxyIDs(),
 		})

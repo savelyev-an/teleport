@@ -201,6 +201,7 @@ func ListKubeClustersWithFilters(ctx context.Context, p client.ListResourcesClie
 	} else if err != nil {
 		return nil, trace.Wrap(err)
 	} else {
+
 		resourceKubeService, err := listKubeClustersWithFiltersFallback(ctx, p, req)
 		if err != nil {
 			return nil, trace.Wrap(err)
