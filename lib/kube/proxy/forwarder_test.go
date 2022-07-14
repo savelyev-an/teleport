@@ -20,6 +20,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -767,20 +768,23 @@ func TestNewClusterSessionDirect(t *testing.T) {
 	authCtx := mockAuthCtx(ctx, t, "kube-cluster", false)
 
 	// helper function to create kube services
-	newKubeServer := func(serverID, addr, kubeCluster string) (types.KubeServer, kubeClusterEndpoint) {
+	newKubeServer := func(name, addr, kubeCluster string) (types.KubeServer, kubeClusterEndpoint) {
 		cluster, err := types.NewKubernetesClusterV3(types.Metadata{
 			Name: kubeCluster,
 		},
 			types.KubernetesClusterSpecV3{})
 		require.NoError(t, err)
-		kubeService, err := types.NewKubernetesServerV3FromCluster(
-			cluster,
-			addr, serverID,
-		)
+		kubeService, err := types.NewKubernetesServerV3(types.Metadata{
+			Name: name,
+		}, types.KubernetesServerSpecV3{
+			Hostname: addr,
+			HostID:   name,
+			Cluster:  cluster,
+		})
 		require.NoError(t, err)
 		kubeServiceEndpoint := kubeClusterEndpoint{
 			addr:     addr,
-			serverID: serverID,
+			serverID: fmt.Sprintf("%s.%s", name, authCtx.teleportCluster.name),
 		}
 		return kubeService, kubeServiceEndpoint
 	}
