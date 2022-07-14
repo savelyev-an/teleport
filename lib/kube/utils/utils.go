@@ -196,9 +196,18 @@ func ListKubeClustersWithFilters(ctx context.Context, p client.ListResourcesClie
 	resources, err := client.GetResourcesWithFilters(ctx, p, req)
 	if trace.IsNotImplemented(err) {
 		resources, err = listKubeClustersWithFiltersFallback(ctx, p, req)
-	}
-	if err != nil {
+		if err != nil {
+			return nil, trace.Wrap(err)
+		}
+	} else if err != nil {
 		return nil, trace.Wrap(err)
+	} else {
+		resourceKubeService, err := listKubeClustersWithFiltersFallback(ctx, p, req)
+		if err != nil {
+			return nil, trace.Wrap(err)
+		}
+		resources = append(resources, resourceKubeService...)
+
 	}
 
 	kss, err = types.ResourcesWithLabels(resources).AsKubeServers()
