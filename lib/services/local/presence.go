@@ -1455,7 +1455,11 @@ func (s *PresenceService) KeepAliveServer(ctx context.Context, h types.KeepAlive
 	case constants.KeepAliveWindowsDesktopService:
 		key = backend.Key(windowsDesktopServicesPrefix, h.Name)
 	case constants.KeepAliveKube:
-		key = backend.Key(kubeServicesPrefix, h.Name)
+		if h.HostID != "" {
+			key = backend.Key(kubeServersPrefix, h.HostID, h.Name)
+		} else { // DELETE IN 13.0. Legacy app server is heartbeating back.
+			key = backend.Key(kubeServicesPrefix, h.Name)
+		}
 	default:
 		return trace.BadParameter("unknown keep-alive type %q", h.GetType())
 	}

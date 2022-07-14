@@ -988,7 +988,15 @@ func (c *Client) GetKubernetesServers(ctx context.Context) ([]types.KubeServer, 
 		return nil, trace.Wrap(err)
 	}
 
-	return servers, nil
+	// Underlying ListResources for kube server was not available, use fallback.
+	// ListResources returns NotImplemented if ResourceType is unknown.
+	// DELETE IN 11.0.0
+	kubeservers, err := c.getKubeServersFallback(ctx)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	return append(servers, kubeservers...), nil
 }
 
 // getKubeServersFallback previous implementation of `GetKubeServers` function
