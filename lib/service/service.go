@@ -3571,6 +3571,7 @@ func (process *TeleportProcess) initProxyEndpoint(conn *Connector) error {
 			TLS:           tlsConfig,
 			LimiterConfig: cfg.Proxy.Limiter,
 			AccessPoint:   accessPoint,
+			GetRotation:   process.getRotation,
 			OnHeartbeat:   process.onHeartbeat(component),
 		})
 		if err != nil {
