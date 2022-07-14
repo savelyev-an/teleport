@@ -1059,7 +1059,7 @@ func (c *Client) deleteAllKubernetesServersFallback(ctx context.Context) error {
 	return trace.Wrap(err)
 }
 
-// UpsertKubernetesServiceV2 is used by kubernetes services to report their presence
+// UpsertKubernetesServer is used by kubernetes services to report their presence
 // to other auth servers in form of hearbeat expiring after ttl period.
 func (c *Client) UpsertKubernetesServer(ctx context.Context, s types.KubeServer) (*types.KeepAlive, error) {
 	server, ok := s.(*types.KubernetesServerV3)
