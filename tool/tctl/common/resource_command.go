@@ -1192,7 +1192,7 @@ func (rc *ResourceCommand) getCollection(ctx context.Context, client auth.Client
 			return nil, trace.Wrap(err)
 		}
 		if rc.ref.Name == "" {
-			return &kubernetesServerCollection{servers: servers}, nil
+			return &kubeServerCollection{servers: servers}, nil
 		}
 
 		var out []types.KubeServer
@@ -1204,7 +1204,7 @@ func (rc *ResourceCommand) getCollection(ctx context.Context, client auth.Client
 		if len(out) == 0 {
 			return nil, trace.NotFound("database server %q not found", rc.ref.Name)
 		}
-		return &kubernetesServerCollection{servers: out}, nil
+		return &kubeServerCollection{servers: out}, nil
 	case types.KindNetworkRestrictions:
 		nr, err := client.GetNetworkRestrictions(ctx)
 		if err != nil {
