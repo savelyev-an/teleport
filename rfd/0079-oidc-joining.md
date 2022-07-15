@@ -111,6 +111,7 @@ Providers of Workload Identity. These are platforms we can support once OIDC joi
 - GCP (GCE, GCB)
 - [CircleCI](https://circleci.com/docs/openid-connect-tokens)
 - [GitLab](https://docs.gitlab.com/ee/ci/cloud_services/)
+- [SPIFFE/SPIRE](https://spiffe.io/docs/latest/keyless/): This presents an interesting use case for tokenless joining in a variety of environment.
 
 Similar implementations:
 
