@@ -1074,6 +1074,11 @@ func NewTeleport(cfg *Config, opts ...NewTeleportOption) (*TeleportProcess, erro
 
 	process.RegisterFunc("common.rotate", process.periodicSyncRotationState)
 
+	// run one upload completer per-process if we're using async recording
+	if !services.IsRecordSync(cfg.Auth.SessionRecordingConfig.GetMode()) {
+		process.RegisterFunc("common.upload", process.initUploaderService)
+	}
+
 	if !serviceStarted {
 		return nil, trace.BadParameter("all services failed to start")
 	}
@@ -2283,22 +2288,6 @@ func (process *TeleportProcess) initSSH() error {
 			return trace.Wrap(err)
 		}
 
-		// init uploader service for recording SSH node, if proxy is not
-		// enabled on this node, because proxy stars uploader service as well
-		if !cfg.Proxy.Enabled {
-			uploaderCfg := filesessions.UploaderConfig{
-				Streamer: authClient,
-				AuditLog: conn.Client,
-			}
-			completerCfg := events.UploadCompleterConfig{
-				SessionTracker: conn.Client,
-				GracePeriod:    defaults.UploadGracePeriod,
-			}
-			if err := process.initUploaderService(uploaderCfg, completerCfg); err != nil {
-				return trace.Wrap(err)
-			}
-		}
-
 		if !conn.UseTunnel() {
 			listener, err := process.importOrCreateListener(listenerNodeSSH, cfg.SSH.Addr.Addr)
 			if err != nil {
@@ -2420,12 +2409,29 @@ func (process *TeleportProcess) registerWithAuthServer(role types.SystemRole, ev
 	})
 }
 
-// initUploadService starts a file-based uploader that scans the local streaming logs directory
+// initUploaderService starts a file-based uploader that scans the local streaming logs directory
 // (data/log/upload/streaming/default/)
-func (process *TeleportProcess) initUploaderService(uploaderCfg filesessions.UploaderConfig, completerCfg events.UploadCompleterConfig) error {
+func (process *TeleportProcess) initUploaderService() error {
 	log := process.log.WithFields(logrus.Fields{
 		trace.Component: teleport.Component(teleport.ComponentAuditLog, process.id),
 	})
+
+	eventC := make(chan Event, 1)
+	process.WaitForEvent(process.ExitContext(), TeleportReadyEvent, eventC)
+	select {
+	case <-eventC:
+		log.Infof("starting upload completer service")
+	case <-process.GracefulExitContext().Done():
+		return nil
+	}
+
+	connectors := process.getConnectors()
+	if len(connectors) == 0 {
+		return trace.BadParameter("no connectors found")
+	}
+
+	conn := connectors[0]
+
 	// create folder for uploads
 	uid, gid, err := adminCreds()
 	if err != nil {
@@ -2453,9 +2459,14 @@ func (process *TeleportProcess) initUploaderService(uploaderCfg filesessions.Upl
 		}
 	}
 
-	uploaderCfg.ScanDir = filepath.Join(path...)
-	uploaderCfg.EventsC = process.Config.UploadEventsC
-	fileUploader, err := filesessions.NewUploader(uploaderCfg)
+	uploadsDir := filepath.Join(path...)
+
+	fileUploader, err := filesessions.NewUploader(filesessions.UploaderConfig{
+		AuditLog: conn.Client,
+		Streamer: conn.Client,
+		ScanDir:  uploadsDir,
+		EventsC:  process.Config.UploadEventsC,
+	})
 	if err != nil {
 		return trace.Wrap(err)
 	}
@@ -2478,16 +2489,17 @@ func (process *TeleportProcess) initUploaderService(uploaderCfg filesessions.Upl
 	// upload completer scans for uploads that have been initiated, but not completed
 	// by the client (aborted or crashed) and completes them. It will be closed once
 	// the uploader context is closed.
-	handler, err := filesessions.NewHandler(filesessions.Config{
-		Directory: filepath.Join(path...),
-	})
+	handler, err := filesessions.NewHandler(filesessions.Config{Directory: uploadsDir})
 	if err != nil {
 		return trace.Wrap(err)
 	}
 
-	completerCfg.Uploader = handler
-	completerCfg.AuditLog = uploaderCfg.AuditLog
-	uploadCompleter, err := events.NewUploadCompleter(completerCfg)
+	uploadCompleter, err := events.NewUploadCompleter(events.UploadCompleterConfig{
+		GracePeriod:    defaults.UploadGracePeriod,
+		Uploader:       handler,
+		AuditLog:       conn.Client,
+		SessionTracker: conn.Client,
+	})
 	if err != nil {
 		return trace.Wrap(err)
 	}
@@ -3812,16 +3824,6 @@ func (process *TeleportProcess) initProxyEndpoint(conn *Connector) error {
 		log.Infof("Exited.")
 	})
 
-	uploaderCfg := filesessions.UploaderConfig{
-		Streamer: accessPoint,
-		AuditLog: conn.Client,
-	}
-	completerCfg := events.UploadCompleterConfig{
-		SessionTracker: conn.Client,
-	}
-	if err := process.initUploaderService(uploaderCfg, completerCfg); err != nil {
-		return trace.Wrap(err)
-	}
 	return nil
 }
 
@@ -4130,19 +4132,6 @@ func (process *TeleportProcess) initApps() {
 			log.Debugf("Waiting for application service dependencies to start.")
 			process.waitForAppDepend()
 			log.Debugf("Application service dependencies have started, continuing.")
-		}
-
-		// Start uploader that will scan a path on disk and upload completed
-		// sessions to the Auth Server.
-		uploaderCfg := filesessions.UploaderConfig{
-			Streamer: accessPoint,
-			AuditLog: conn.Client,
-		}
-		completerCfg := events.UploadCompleterConfig{
-			SessionTracker: conn.Client,
-		}
-		if err := process.initUploaderService(uploaderCfg, completerCfg); err != nil {
-			return trace.Wrap(err)
 		}
 
 		// Start header dumping debugging application if requested.
