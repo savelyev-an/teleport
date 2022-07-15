@@ -49,7 +49,7 @@ We will cache these for two reasons:
 
 - Improve the performance of validating JWTs, as we will not need to make a HTTPS request to the issuer.
 - Improve the reliability, as we can validate JWTs even if the issuer is experiencing some downtime.
-- Reduce the impact of Teleport on an issuer. If onboarding a large number of nodes, we do not want to unduly place pressure on the issuer.
+- Reduce the impact of Teleport on an issuer. If onboarding a large number of nodes, we do not want to unduly place pressure on the issuer. 
 
 We should keep in mind the following considerations:
 
@@ -70,7 +70,7 @@ spec:
   roles: [Node]
   join_method: oidc-jwt
   issuer_url: https://accounts.google.com
-  allow: claims.google.compute_engine.project_id == "my-project" && claims.google.compute_engine.instance_name == "an-instance"
+  allow: claims.aud == "noah.teleport.sh" && claims.google.compute_engine.project_id == "my-project" && claims.google.compute_engine.instance_name == "an-instance"
 ```
 
 To allow the user to configure rules for what identities will be accepted, we will use the [Common Expression Language (CEL)](https://github.com/google/cel-spec). This allows a large degree of flexibility in the complexity of rules users can configure, but still allows simple expressions.
@@ -80,6 +80,14 @@ Users must also configure the `issuer_url`. This must be a host on which there i
 ### Node support
 
 Node here not only refers to a Teleport node, but also to a `tbot` instance.
+
+We will need to support collecting the token from the environment. This will differ on each platform. Some offer the token via a metadata service, and others directly inject it via an environment variable. Where possible, we should encourage the user to configure the token to be generated with an audience of their Teleport cluster, however, not all providers support this (e.g GitLab CI/CD).
+
+For GCP, a HTTP request is made to a metadata service. In this request, a query parameter controls the audience of the generated token. E.g
+
+```
+GET http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=https://noah.teleport.sh&format=full
+```
 
 ### Security Considerations
 
