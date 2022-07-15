@@ -32,6 +32,7 @@ Whilst multiple providers offer OIDC identities to workloads running on their pl
 
 - GitHub Actions: a key platform for growing usage of Machine ID.
 - GitLab CI/CD
+- CircleCI
 - GCP GCB
 
 ## Details
@@ -104,7 +105,16 @@ We should require that the configured issuer URL is HTTPS to mitigate this.
 
 ## References and Resources
 
+Providers of Workload Identity. These are platforms we can support once OIDC joining is added:
+
+- [Github Actions](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect)
+- GCP (GCE, GCB)
+- [CircleCI](https://circleci.com/docs/openid-connect-tokens)
+- [GitLab](https://docs.gitlab.com/ee/ci/cloud_services/)
+
 Similar implementations:
 
 - [GCP Workload identity federation](https://cloud.google.com/iam/docs/workload-identity-federation)
 - [HashiCorp Vault](https://www.vaultproject.io/docs/auth/jwt)
+- [AWS IAM](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html)
+- [Azure AD](https://docs.microsoft.com/en-us/azure/active-directory/develop/workload-identity-federation)
