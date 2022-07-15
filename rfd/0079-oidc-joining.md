@@ -28,12 +28,7 @@ Users will need to be able to configure trust in an OP, and rules that determine
 
 This feature reduces the friction involved in adding many new nodes to Teleport on a variety of platforms. This is also more secure, as the user does not need to distribute a token which is liable to exfilitration.
 
-Whilst multiple providers offer OIDC identities to workloads running on their platform, we will start by targetting GCP GCE since this represents a large portion of the market. However, the work towards this feature will also enable us to simply add other providers that support OIDC such as:
-
-- GitHub Actions: a key platform for growing usage of Machine ID.
-- GitLab CI/CD
-- CircleCI
-- GCP GCB
+Whilst multiple providers offer OIDC identities to workloads running on their platform, we will start by targetting GCP GCE since this represents a key platform for Teleport, and is also well documented and easy to test on. However, the work towards this feature will also enable us to simply add other providers that support OIDC workload identity (see the references for more).
 
 ## Details
 
