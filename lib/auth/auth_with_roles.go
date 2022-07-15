@@ -1201,6 +1201,8 @@ func (r resourceChecker) CanAccess(resource types.Resource) error {
 	switch rr := resource.(type) {
 	case types.AppServer:
 		return r.CheckAccess(rr.GetApp(), mfaParams)
+	case types.KubeServer:
+		return r.CheckAccess(rr.GetCluster(), mfaParams)
 	case types.DatabaseServer:
 		return r.CheckAccess(rr.GetDatabase(), mfaParams)
 	case types.Database:

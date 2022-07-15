@@ -222,7 +222,6 @@ func (t *TLSServer) getServerInfoFunc(cluster types.KubeCluster) func() (types.R
 func (t *TLSServer) getServerInfo(cluster types.KubeCluster) (types.Resource, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-
 	var addr string
 	if t.TLSServerConfig.ForwarderConfig.PublicAddr != "" {
 		addr = t.TLSServerConfig.ForwarderConfig.PublicAddr
@@ -235,7 +234,7 @@ func (t *TLSServer) getServerInfo(cluster types.KubeCluster) (types.Resource, er
 	//
 	// Note: we *don't* want to add suffix for kubernetes_service!
 	// This breaks reverse tunnel routing, which uses server.Name.
-	name := t.HostID
+	name := cluster.GetName()
 	if t.KubeServiceType != KubeService {
 		name += "-proxy_service"
 	}
@@ -265,7 +264,6 @@ func (t *TLSServer) getServerInfo(cluster types.KubeCluster) (types.Resource, er
 func (t *TLSServer) startHeartbeat(ctx context.Context, kubeCluster types.KubeCluster) error {
 
 	heartbeat, err := srv.NewHeartbeat(srv.HeartbeatConfig{
-
 		Mode:            srv.HeartbeatModeKube,
 		Context:         t.TLSServerConfig.Context,
 		Component:       t.TLSServerConfig.Component,
