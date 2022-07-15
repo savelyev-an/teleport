@@ -1084,9 +1084,12 @@ func (s *PresenceService) UpsertKubernetesServer(ctx context.Context, server typ
 		return &types.KeepAlive{}, nil
 	}
 	return &types.KeepAlive{
-		Type:    types.KeepAlive_KUBERNETES,
-		LeaseID: lease.ID,
-		Name:    server.GetName(),
+		Type:      types.KeepAlive_KUBERNETES,
+		LeaseID:   lease.ID,
+		Name:      server.GetName(),
+		Namespace: server.GetNamespace(),
+		HostID:    server.GetHostID(),
+		Expires:   server.Expiry(),
 	}, nil
 }
 
@@ -1457,7 +1460,7 @@ func (s *PresenceService) KeepAliveServer(ctx context.Context, h types.KeepAlive
 	case constants.KeepAliveKube:
 		if h.HostID != "" {
 			key = backend.Key(kubeServersPrefix, h.HostID, h.Name)
-		} else { // DELETE IN 13.0. Legacy app server is heartbeating back.
+		} else { // DELETE IN 13.0. Legacy kube server is heartbeating back.
 			key = backend.Key(kubeServicesPrefix, h.Name)
 		}
 	default:

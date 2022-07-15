@@ -1724,7 +1724,7 @@ func (f *Forwarder) newClusterSessionSameCluster(ctx authContext) (*clusterSessi
 
 		// TODO(awly): check RBAC
 		endpoints = append(endpoints, kubeClusterEndpoint{
-			serverID: fmt.Sprintf("%s.%s", s.GetName(), ctx.teleportCluster.name),
+			serverID: fmt.Sprintf("%s.%s", s.GetHostID(), ctx.teleportCluster.name),
 			addr:     s.GetHostname(),
 			proxyIDs: s.GetProxyIDs(),
 		})

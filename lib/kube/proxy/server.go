@@ -145,23 +145,6 @@ func NewTLSServer(cfg TLSServerConfig) (*TLSServer, error) {
 	}
 	server.TLS.GetConfigForClient = server.GetConfigForClient
 	server.closeContext, server.closeFunc = context.WithCancel(cfg.Context)
-	// Start the heartbeat to announce kubernetes_service presence.
-	//
-	// Only announce when running in an actual kubernetes_service, or when
-	// running in proxy_service with local kube credentials. This means that
-	// proxy_service will pretend to also be kubernetes_service.
-	if cfg.KubeServiceType == KubeService ||
-		(cfg.KubeServiceType == LegacyProxyService && len(fwd.kubeClusters()) > 0) {
-		log.Debugf("Starting kubernetes_service heartbeats for %q", cfg.Component)
-		for _, cluster := range fwd.kubeClusters() {
-
-			if err := server.startHeartbeat(server.closeContext, cluster); err != nil {
-				return nil, trace.Wrap(err)
-			}
-		}
-	} else {
-		log.Debug("No local kube credentials on proxy, will not start kubernetes_service heartbeats")
-	}
 
 	return server, nil
 }
@@ -189,6 +172,24 @@ func (t *TLSServer) Serve(listener net.Listener) error {
 		return trace.Wrap(err)
 	}
 	t.mu.Unlock()
+
+	// Start the heartbeat to announce kubernetes_service presence.
+	//
+	// Only announce when running in an actual kubernetes_service, or when
+	// running in proxy_service with local kube credentials. This means that
+	// proxy_service will pretend to also be kubernetes_service.
+	if t.KubeServiceType == KubeService ||
+		(t.KubeServiceType == LegacyProxyService && len(t.fwd.kubeClusters()) > 0) {
+		log.Debugf("Starting kubernetes_service heartbeats for %q", t.Component)
+		for _, cluster := range t.fwd.kubeClusters() {
+
+			if err := t.startHeartbeat(t.closeContext, cluster); err != nil {
+				return trace.Wrap(err)
+			}
+		}
+	} else {
+		log.Debug("No local kube credentials on proxy, will not start kubernetes_service heartbeats")
+	}
 
 	return t.Server.Serve(tls.NewListener(mux.TLS(), t.TLS))
 }
