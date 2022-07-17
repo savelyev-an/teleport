@@ -179,7 +179,8 @@ func (u *UploadCompleter) CheckUploads(ctx context.Context) error {
 			Metadata: events.Metadata{
 				Type:  SessionUploadEvent,
 				Code:  SessionUploadCode,
-				ID:    uuid.New(),
+				Time:  u.cfg.Clock.Now().UTC(),
+				ID:    uuid.New().String(),
 				Index: SessionUploadIndex,
 			},
 			SessionMetadata: events.SessionMetadata{
