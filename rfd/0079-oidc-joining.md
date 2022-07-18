@@ -50,7 +50,7 @@ Registration flow:
 1. Client is configured by the user to use `oidc-jwt` joining with a specific provider. The client then uses the provider-specific logic to obtain a token.
 2. The client will call the `RegisterUsingToken` endpoint, specifying the name of the token, and providing the token that it has collected.
 3. The server will attempt to fetch the Token resource for the specified token.
-4. The server will check JWT header to ensure the `alg` is one we have allow-listed (RS256, TODO: Full list)
+4. The server will check JWT header to ensure the `alg` is one we have allow-listed (RS[256, 384, 512])
 5. The server will check the `kid` of the JWT header, and obtain the relevant JWK from the cache or from the specified issuers well-known JWKS endpoint. It will then use the JWK to validate the token has been signed by the issuer.
 6. Other key claims of the JWT will be validated:
   - Ensure the Issued At Time (iat) is in the past.
