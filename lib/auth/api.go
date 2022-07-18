@@ -46,8 +46,8 @@ type Announcer interface {
 	// DELETE IN 11.0. Deprecated, use UpsertKubeServiceV2
 	UpsertKubeService(context.Context, types.Server) error
 
-	// UpsertKubeServiceV2 registers a kubernetes kubernetes service
-	// DELETE IN 13.0. Deprecated, use UpsertKubeServiceV2
+	// UpsertKubeServiceV2 registers a kubernetes service
+	// DELETE IN 13.0. Deprecated, use UpsertKubernetesServer
 	UpsertKubeServiceV2(context.Context, types.Server) (*types.KeepAlive, error)
 
 	// UpsertKubernetesServer registers a kubernetes server

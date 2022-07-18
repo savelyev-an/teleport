@@ -143,10 +143,10 @@ func EncodeClusterName(clusterName string) string {
 	return "k" + hex.EncodeToString([]byte(clusterName))
 }
 
-// KubeServicesPresence fetches a list of registered kubernetes services.
+// KubeServicesPresence fetches a list of registered kubernetes servers.
 // It's a subset of services.Presence.
 type KubeServicesPresence interface {
-	// GetKubeServices returns a list of registered kubernetes services.
+	// GetKubernetesServers returns a list of registered kubernetes servers.
 	GetKubernetesServers(context.Context) ([]types.KubeServer, error)
 }
 

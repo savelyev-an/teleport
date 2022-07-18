@@ -1038,7 +1038,7 @@ func (s *PresenceService) GetKubeServices(ctx context.Context) ([]types.Server, 
 }
 
 // DeleteKubeService deletes a named kubernetes service.
-// DELETE IN 13.0. Deprecated, use GetApplicationServers.
+// DELETE IN 13.0. Deprecated, use DeleteKubernetesServer.
 func (s *PresenceService) DeleteKubeService(ctx context.Context, name string) error {
 	if name == "" {
 		return trace.BadParameter("no name specified for kubernetes service deletion")
@@ -1047,7 +1047,7 @@ func (s *PresenceService) DeleteKubeService(ctx context.Context, name string) er
 }
 
 // DeleteAllKubeServices deletes all registered kubernetes services.
-// DELETE IN 13.0. Deprecated, use GetApplicationServers.
+// DELETE IN 13.0. Deprecated, use DeleteAllKubernetesServers.
 func (s *PresenceService) DeleteAllKubeServices(ctx context.Context) error {
 	return trace.Wrap(s.DeleteRange(
 		ctx,
@@ -1056,7 +1056,7 @@ func (s *PresenceService) DeleteAllKubeServices(ctx context.Context) error {
 	))
 }
 
-// UpsertApplicationServer registers an application server.
+// UpsertKubernetesServer registers an kubernetes server.
 func (s *PresenceService) UpsertKubernetesServer(ctx context.Context, server types.KubeServer) (*types.KeepAlive, error) {
 	if err := server.CheckAndSetDefaults(); err != nil {
 		return nil, trace.Wrap(err)

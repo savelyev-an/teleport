@@ -669,7 +669,6 @@ func (rc *ResourceCommand) Delete(ctx context.Context, client auth.ClientI) (err
 			return trace.Wrap(err)
 		}
 		fmt.Printf("semaphore '%s/%s' has been deleted\n", rc.ref.SubKind, rc.ref.Name)
-
 	case types.KindKubeService:
 		if err = client.DeleteKubeService(ctx, rc.ref.Name); err != nil {
 			return trace.Wrap(err)

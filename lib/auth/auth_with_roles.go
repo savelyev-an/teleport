@@ -4094,12 +4094,12 @@ func (a *ServerWithRoles) UpsertKubeServiceV2(ctx context.Context, s types.Serve
 func (a *ServerWithRoles) checkAccessToKubeCluster(cluster types.KubeCluster) error {
 	return a.context.Checker.CheckAccess(
 		cluster,
-		// MFA is not required for operations on app resources but
+		// MFA is not required for operations on kube clusters resources but
 		// will be enforced at the connection time.
 		services.AccessMFAParams{Verified: true})
 }
 
-// GetApplicationServers returns all registered application servers.
+// GetKubernetesServers returns all registered kubernetes servers.
 func (a *ServerWithRoles) GetKubernetesServers(ctx context.Context) ([]types.KubeServer, error) {
 	if err := a.action(apidefaults.Namespace, types.KindKubeServer, types.VerbList, types.VerbRead); err != nil {
 		return nil, trace.Wrap(err)
@@ -4109,7 +4109,7 @@ func (a *ServerWithRoles) GetKubernetesServers(ctx context.Context) ([]types.Kub
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
-	// Filter out apps the caller doesn't have access to.
+	// Filter out kube servers the caller doesn't have access to.
 	var filtered []types.KubeServer
 	for _, server := range servers {
 		err := a.checkAccessToKubeCluster(server.GetCluster())
@@ -4119,8 +4119,6 @@ func (a *ServerWithRoles) GetKubernetesServers(ctx context.Context) ([]types.Kub
 			filtered = append(filtered, server)
 		}
 	}
-
-	//REVIEW: check if newKubeChecker is necessary
 
 	return filtered, nil
 }
@@ -4134,7 +4132,7 @@ func (a *ServerWithRoles) UpsertKubernetesServer(ctx context.Context, s types.Ku
 	return a.authServer.UpsertKubernetesServer(ctx, s)
 }
 
-// DeleteApplicationServer deletes specified application server.
+// DeleteKubernetesServer deletes specified kubernetes server.
 func (a *ServerWithRoles) DeleteKubernetesServer(ctx context.Context, hostID, name string) error {
 	if err := a.action(apidefaults.Namespace, types.KindKubeServer, types.VerbDelete); err != nil {
 		return trace.Wrap(err)
@@ -4142,7 +4140,7 @@ func (a *ServerWithRoles) DeleteKubernetesServer(ctx context.Context, hostID, na
 	return a.authServer.DeleteKubernetesServer(ctx, hostID, name)
 }
 
-// DeleteAllApplicationServers deletes all registered application servers.
+// DeleteAllKubernetesServers deletes all registered kubernetes servers.
 func (a *ServerWithRoles) DeleteAllKubernetesServers(ctx context.Context) error {
 	if err := a.action(apidefaults.Namespace, types.KindKubeServer, types.VerbList, types.VerbDelete); err != nil {
 		return trace.Wrap(err)

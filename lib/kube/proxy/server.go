@@ -175,9 +175,9 @@ func (t *TLSServer) Serve(listener net.Listener) error {
 
 	// Start the heartbeat to announce kubernetes_service presence.
 	//
-	// Only announce when running in an actual kubernetes_service, or when
+	// Only announce when running in an actual kube_server, or when
 	// running in proxy_service with local kube credentials. This means that
-	// proxy_service will pretend to also be kubernetes_service.
+	// proxy_service will pretend to also be kube_server.
 	if t.KubeServiceType == KubeService ||
 		(t.KubeServiceType == LegacyProxyService && len(t.fwd.kubeClusters()) > 0) {
 		log.Debugf("Starting kubernetes_service heartbeats for %q", t.Component)
