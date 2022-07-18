@@ -157,6 +157,8 @@ type Server struct {
 
 	// lockWatcher is the server's lock watcher.
 	lockWatcher *services.LockWatcher
+
+	targetID, targetAddr, targetHostname string
 }
 
 // ServerConfig is the configuration needed to create an instance of a Server.
@@ -209,6 +211,8 @@ type ServerConfig struct {
 
 	// LockWatcher is a lock watcher.
 	LockWatcher *services.LockWatcher
+
+	TargetID, TargetAddr, TargetHostname string
 }
 
 // CheckDefaults makes sure all required parameters are passed in.
@@ -290,6 +294,9 @@ func New(c ServerConfig) (*Server, error) {
 		StreamEmitter:   c.Emitter,
 		parentContext:   c.ParentContext,
 		lockWatcher:     c.LockWatcher,
+		targetID:        c.TargetID,
+		targetAddr:      c.TargetAddr,
+		targetHostname:  c.TargetHostname,
 	}
 
 	// Set the ciphers, KEX, and MACs that the in-memory server will send to the
@@ -331,6 +338,17 @@ func New(c ServerConfig) (*Server, error) {
 	s.closeContext, s.closeCancel = context.WithCancel(c.ParentContext)
 
 	return s, nil
+}
+
+// TargetMetadata returns metadata about the forwarding target.
+func (s *Server) TargetMetadata() apievents.ServerMetadata {
+	return apievents.ServerMetadata{
+		ServerNamespace: s.GetNamespace(),
+		ServerID:        s.targetID,
+		ServerAddr:      s.targetAddr,
+		ServerLabels:    nil,
+		ServerHostname:  "",
+	}
 }
 
 // Context returns parent context, used to signal

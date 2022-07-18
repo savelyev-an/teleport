@@ -218,6 +218,17 @@ type Server struct {
 	awsMatchers []services.AWSMatcher
 }
 
+// TargetMetadata returns metadata about the server.
+func (s *Server) TargetMetadata() apievents.ServerMetadata {
+	return apievents.ServerMetadata{
+		ServerNamespace: s.GetNamespace(),
+		ServerID:        s.ID(),
+		ServerAddr:      s.Addr(),
+		ServerLabels:    s.labels,
+		ServerHostname:  s.hostname,
+	}
+}
+
 // GetClock returns server clock implementation
 func (s *Server) GetClock() clockwork.Clock {
 	return s.clock
