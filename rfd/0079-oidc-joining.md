@@ -48,7 +48,7 @@ We will introduce a new token type, `oidc-jwt`, and add an additional field to t
 Registration flow:
 
 1. Client is configured by the user to use `oidc-jwt` joining with a specific provider. The client then uses the provider-specific logic to obtain a token.
-2. The client will call the `RegisterUsingToken` endpoint, specifying the name of the token, and providing the token that it has collected.
+2. The client will call the `RegisterUsingToken` endpoint, providing the OIDC JWT token that it has collected, and specifying the name of the Teleport provisioning token which should be used to verify it.
 3. The server will attempt to fetch the Token resource for the specified token.
 4. The server will check JWT header to ensure the `alg` is one we have allow-listed (RS[256, 384, 512])
 5. The server will check the `kid` of the JWT header, and obtain the relevant JWK from the cache or from the specified issuers well-known JWKS endpoint. It will then use the JWK to validate the token has been signed by the issuer.
