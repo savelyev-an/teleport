@@ -140,6 +140,19 @@ In order to verify the JWT, we have to fetch the public key from the issuers's J
 
 We should require that the configured issuer URL is HTTPS to mitigate this.
 
+#### Vulnerabilities in JWT and JWT signing algorithms
+
+This section is included, since historically, there have been a large number of cases of vulnerabilities introduced into software because of misunderstandings and mistakes in JWT validation.
+
+One of the largest vulnerabilities in JWT validation relates to the fact that the JWT itself specifies which signing algorithm has been used, and should be used for validation. In cases where the server does not ensure that this algorithm falls within a set, there are two key exploitation paths:
+
+- Leaving a JWT unsigned, and setting the algorithm header to `none` means that JWT validation will succeed in libraries that have not been designed to prevent this flaw.
+- In cases where a service uses asymmetric algorithms for JWT signing, some libraries are vulnerable to accepting a JWT that has been signed used a symmetric algorithm, with the public key of the issuer used as the pre-shared key.
+
+By enforcing an allow-list (to only common battle-tested asymmetric algorithms) of algorithms, and checking this list as part of JWT validation, we mitigate these two vulnerabilities.
+
+Configuring an allow-list also allows us to remove algorithms if a vulnerability is discovered in a specific one.
+
 ## References and Resources
 
 OIDC Specifications:
