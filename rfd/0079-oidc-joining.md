@@ -167,7 +167,7 @@ OIDC Specifications:
 Providers of Workload Identity. These are platforms we can support once OIDC joining is added:
 
 - [Github Actions](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect)
-- GCP (GCE, GCB)
+- [GCP (GCE, GCB)](https://cloud.google.com/compute/docs/instances/verifying-instance-identity#token_format)
 - [CircleCI](https://circleci.com/docs/openid-connect-tokens)
 - [GitLab](https://docs.gitlab.com/ee/ci/cloud_services/)
 - [SPIFFE/SPIRE](https://spiffe.io/docs/latest/keyless/): This presents an interesting use case for tokenless joining in a variety of environment.
