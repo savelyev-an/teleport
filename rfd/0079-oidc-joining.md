@@ -91,10 +91,11 @@ spec:
   roles: [Node]
   join_method: oidc-jwt
   issuer_url: https://accounts.google.com
-  allow: claims.aud == "noah.teleport.sh" && claims.google.compute_engine.project_id == "my-project" && claims.google.compute_engine.instance_name == "an-instance"
+  allow:
+  - claims: claims.aud == "noah.teleport.sh" && claims.google.compute_engine.project_id == "my-project" && claims.google.compute_engine.instance_name == "an-instance"
 ```
 
-To allow the user to configure rules for what identities will be accepted, we will use the [Common Expression Language (CEL)](https://github.com/google/cel-spec). This allows a large degree of flexibility in the complexity of rules users can configure, but still allows simple expressions.
+To allow the user to configure rules for what identities will be accepted, the `claims` field will accept a [Common Expression Language (CEL)](https://github.com/google/cel-spec) expression that must evaluate to a boolean value. The user is allowed to configure as many expressions as they want, and the registration will be allowed if **at least one** expression evaluates to true. This allows a large degree of flexibility in the complexity of rules users can configure, but still allows simple expressions.
 
 Users must also configure the `issuer_url`. This must be a host on which there is a compliant `/.well-known/openid-configuration` endpoint.
 
