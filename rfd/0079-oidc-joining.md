@@ -75,6 +75,8 @@ We should keep in mind the following considerations:
 - When we are presented with a JWT with a previously unseen `kid`, we should re-check the issuer's JWKs, as they may have begun issuing tokens with a new JWK.
 - We should ensure that the TTL of the cache entries is relatively short, as we want to allow an issuer to revoke a JWK that has been stolen.
 
+We will implement this cache in-memory, as the data set is relatively small and it's cheap for us to repopulate this after a service restart.
+
 #### Configuration
 
 We will leverage the existing Token configuration kind as used by static tokens and IAM joining:
