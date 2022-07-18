@@ -1563,8 +1563,7 @@ message PaginatedResource {
         types.ServerV2 Node = 3 [ (gogoproto.jsontag) = "node,omitempty" ];
         // KubeService represents a KubernetesService resource.
         // DELETE IN 13.0. Deprecated, use KubernetesService field.
-        types.ServerV2 KubeService = 4
-            [ (gogoproto.jsontag) = "kube_service,omitempty", deprecated = true ];
+        types.ServerV2 KubeService = 4 [ (gogoproto.jsontag) = "kube_service,omitempty" ];
         // WindowsDesktop represents a WindowsDesktop resource.
         types.WindowsDesktopV3 WindowsDesktop = 5
             [ (gogoproto.jsontag) = "windows_desktop,omitempty" ];
