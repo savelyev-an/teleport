@@ -50,12 +50,12 @@ Registration flow:
 1. Client is configured by the user to use `oidc-jwt` joining with a specific provider. The client then uses the provider-specific logic to obtain a token.
 2. The client will call the `RegisterUsingToken` endpoint, specifying the name of the token, and providing the token that it has collected.
 3. The server will attempt to fetch the Token resource for the specified token.
-4. The server will check JWT header to ensure the `alg` is one we have whitelisted (RS256, TODO: Full list)
+4. The server will check JWT header to ensure the `alg` is one we have allow-listed (RS256, TODO: Full list)
 5. The server will check the `kid` of the JWT header, and obtain the relevant JWK from the cache or from the specified issuers well-known JWKS endpoint. It will then use the JWK to validate the token has been signed by the issuer.
 6. Other key claims of the JWT will be validated:
   - Ensure the Issued At Time (iat) is in the past.
   - Ensure the Expiry Time (exp) is in the future.
-7. The user's configured CEL for the token will be evaluated against the claims, to ensure that the token is allowed to register with the Teleport cluster.
+7. The user's [configured Common Expression Language rule](#configuration) for the token will be evaluated against the claims, to ensure that the token is allowed to register with the Teleport cluster.
 8. Certificates will be generated for the client. The generated certificates will be non-renewable, as the client will proceed through the same steps to generate new certificates. This prevents exfiltratred credentials being used to repeatedly generate more credentials, maintaining access to the system.
 
 #### Caching JWKs
@@ -96,7 +96,7 @@ Users must also configure the `issuer_url`. This must be a host on which there i
 
 ### Node support
 
-Node here not only refers to a Teleport node, but also to a `tbot` instance.
+Node here not only refers to a Teleport node, but also to various other participants within a Teleport cluster (e.g tbot, kube agent etc).
 
 We will need to support collecting the token from the environment. This will differ on each platform. Some offer the token via a metadata service, and others directly inject it via an environment variable. Where possible, we should encourage the user to configure the token to be generated with an audience of their Teleport cluster, however, not all providers support this (e.g GitLab CI/CD).
 
