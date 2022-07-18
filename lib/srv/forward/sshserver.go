@@ -346,7 +346,6 @@ func (s *Server) TargetMetadata() apievents.ServerMetadata {
 		ServerNamespace: s.GetNamespace(),
 		ServerID:        s.targetID,
 		ServerAddr:      s.targetAddr,
-		ServerLabels:    nil,
 		ServerHostname:  s.targetHostname,
 		Forwarded:       true,
 	}
