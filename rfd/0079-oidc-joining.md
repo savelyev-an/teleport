@@ -41,6 +41,23 @@ OIDC supports multiple types of token (`id_token`: a JWT encoding information ab
 
 ### Auth server support
 
+We will re-use the existing endpoints around joining as much as possible. This means that the main entry-point for joining will be the existing `RegisterUsingToken` method.
+
+We will introduce a new token type, `oidc-jwt`, and add an additional field to the Token resource to allow the issuer URL to be specified (`issuer_url`).
+
+Registration flow:
+
+1. Client is configured by the user to use `oidc-jwt` joining with a specific provider. The client then uses the provider-specific logic to obtain a token.
+2. The client will call the `RegisterUsingToken` endpoint, specifying the name of the token, and providing the token that it has collected.
+3. The server will attempt to fetch the Token resource for the specified token.
+4. The server will check JWT header to ensure the `alg` is one we have whitelisted (RS256, TODO: Full list)
+5. The server will check the `kid` of the JWT header, and obtain the relevant JWK from the cache or from the specified issuers well-known JWKS endpoint. It will then use the JWK to validate the token has been signed by the issuer.
+6. Other key claims of the JWT will be validated:
+  - Ensure the Issued At Time (iat) is in the past.
+  - Ensure the Expiry Time (exp) is in the future.
+7. The user's configured CEL for the token will be evaluated against the claims, to ensure that the token is allowed to register with the Teleport cluster.
+8. Certificates will be generated for the client. The generated certificates will be non-renewable, as the client will proceed through the same steps to generate new certificates. This prevents exfiltratred credentials being used to repeatedly generate more credentials, maintaining access to the system.
+
 #### Caching JWKs
 
 Special attention should be given to the logic around caching the JWKs.
