@@ -99,6 +99,12 @@ To allow the user to configure rules for what identities will be accepted, the `
 
 Users must also configure the `issuer_url`. This must be a host on which there is a compliant `/.well-known/openid-configuration` endpoint. Information about the structure of this endpoint can be found in the [OIDC Core and Discovery specifications.](#references-and-resources)
 
+#### Extracting claims as metadata for generated credentials
+
+The JWTs issued by providers often contain claims that would be useful when auditing actions. We can extract these claims, and embed them into the certificates during registration. This additional metadata can then be audit logged when the certificates are used, allowing actions to be attributed to specific CI runs or individual VMs.
+
+In order to implement OIDC joining in a timely manner, we should consider this out of scope for this initial implementation.
+
 ### Node support
 
 Node here not only refers to a Teleport node, but also to various other participants within a Teleport cluster (e.g tbot, kube agent etc).
