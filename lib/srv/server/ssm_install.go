@@ -20,7 +20,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/aws/aws-sdk-go/service/ssm/ssmiface"
@@ -33,18 +33,27 @@ type Installation struct {
 	instances []*string
 	SSM       ssmiface.SSMAPI
 	rechecker time.Ticker
+	params    map[string][]*string
 }
 
-func NewInstallation(client ssmiface.SSMAPI, instances []*ec2.Instance) *Installation {
+func NewInstallation(client ssmiface.SSMAPI, instances []*ec2.Instance, params map[string]string) *Installation {
 	var ids []*string
 
 	for _, inst := range instances {
 		ids = append(ids, inst.InstanceId)
 	}
+
+	ssmParams := make(map[string][]*string)
+
+	for key, val := range params {
+		ssmParams[key] = []*string{aws.String(val)}
+	}
+
 	return &Installation{
 		instances: ids,
 		SSM:       client,
 		rechecker: *time.NewTicker(time.Second * 30),
+		params:    ssmParams,
 	}
 }
 
@@ -60,7 +69,7 @@ func (i *Installation) checkCommands(commandID *string) ([]*events.EC2DiscoveryS
 		if err != nil {
 			return nil, trace.Wrap(err)
 		}
-		status := aws.ToString(cmdOut.Status)
+		status := aws.StringValue(cmdOut.Status)
 		if status == ssm.CommandStatusInProgress {
 			return nil, trace.Wrap(ErrCommandInProgress)
 		}
@@ -77,9 +86,9 @@ func (i *Installation) checkCommands(commandID *string) ([]*events.EC2DiscoveryS
 				Type: libevent.EC2DiscoveryInstallScriptEvent,
 				Code: code,
 			},
-			CommandID:  aws.ToString(commandID),
-			InstanceID: aws.ToString(inst),
-			ExitCode:   aws.ToInt64(cmdOut.ResponseCode),
+			CommandID:  aws.StringValue(commandID),
+			InstanceID: aws.StringValue(inst),
+			ExitCode:   aws.Int64Value(cmdOut.ResponseCode),
 			Status:     status,
 		}
 
@@ -92,6 +101,7 @@ func (i *Installation) DoInstall(document string) ([]*events.EC2DiscoveryScriptR
 	output, err := i.SSM.SendCommand(&ssm.SendCommandInput{
 		DocumentName: aws.String(document),
 		InstanceIds:  i.instances,
+		Parameters:   i.params,
 	})
 	if err != nil {
 		return nil, trace.Wrap(err)

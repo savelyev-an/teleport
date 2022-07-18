@@ -32,9 +32,10 @@ import (
 )
 
 type EC2Instances struct {
-	Region    string
-	Document  string
-	Instances []*ec2.Instance
+	Region     string
+	Document   string
+	Parameters map[string]string
+	Instances  []*ec2.Instance
 }
 
 type Watcher struct {
@@ -98,10 +99,11 @@ func NewCloudServerWatcher(ctx context.Context, matchers []services.AWSMatcher, 
 }
 
 type ec2InstanceFetcher struct {
-	Filters  []*ec2.Filter
-	EC2      ec2iface.EC2API
-	Region   string
-	Document string
+	Filters    []*ec2.Filter
+	EC2        ec2iface.EC2API
+	Region     string
+	Document   string
+	Parameters map[string]string
 }
 
 func newEc2InstanceFetcher(matcher services.AWSMatcher, region, document string,
@@ -111,17 +113,15 @@ func newEc2InstanceFetcher(matcher services.AWSMatcher, region, document string,
 		Name:   aws.String("instance-state-name"),
 		Values: aws.StringSlice([]string{ec2.InstanceStateNameRunning}),
 	})
-	for key, val := range labels {
-		tagFilters = append(tagFilters, &ec2.Filter{
-			Name:   aws.String("tag:" + key),
-			Values: aws.StringSlice(val),
-		})
-	}
+
 	fetcherConfig := ec2InstanceFetcher{
 		EC2:      ec2Client,
 		Filters:  tagFilters,
 		Region:   region,
 		Document: document,
+		Parameters: map[string]string{
+			"token": matcher.JoinToken,
+		},
 	}
 	return &fetcherConfig
 }
@@ -143,8 +143,9 @@ func (f *ec2InstanceFetcher) GetEC2Instances(ctx context.Context) (*EC2Instances
 	}
 
 	return &EC2Instances{
-		Region:    f.Region,
-		Document:  f.Document,
-		Instances: instances,
+		Region:     f.Region,
+		Document:   f.Document,
+		Instances:  instances,
+		Parameters: f.Parameters,
 	}, nil
 }
