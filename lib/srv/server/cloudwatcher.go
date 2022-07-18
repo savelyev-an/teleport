@@ -35,6 +35,7 @@ type EC2Instances struct {
 	Region     string
 	Document   string
 	Parameters map[string]string
+	AccountID  string
 	Instances  []*ec2.Instance
 }
 
@@ -57,7 +58,9 @@ func (w *Watcher) Run() {
 				log.Error("Failed to fetch EC2 instances: ", err)
 				continue
 			}
-			w.Instances <- *inst
+			if inst != nil {
+				w.Instances <- *inst
+			}
 		}
 		select {
 		case <-ticker.C:
@@ -128,11 +131,15 @@ func newEc2InstanceFetcher(matcher services.AWSMatcher, region, document string,
 
 func (f *ec2InstanceFetcher) GetEC2Instances(ctx context.Context) (*EC2Instances, error) {
 	var instances []*ec2.Instance
+	var accountID string
 	err := f.EC2.DescribeInstancesPagesWithContext(ctx, &ec2.DescribeInstancesInput{
 		Filters: f.Filters,
 	},
 		func(dio *ec2.DescribeInstancesOutput, b bool) bool {
 			for _, res := range dio.Reservations {
+				if accountID == "" {
+					accountID = aws.StringValue(res.OwnerId)
+				}
 				instances = append(instances, res.Instances...)
 			}
 			return true
@@ -142,7 +149,12 @@ func (f *ec2InstanceFetcher) GetEC2Instances(ctx context.Context) (*EC2Instances
 		return nil, common.ConvertError(err)
 	}
 
+	if len(instances) == 0 {
+		return nil, nil
+	}
+
 	return &EC2Instances{
+		AccountID:  accountID,
 		Region:     f.Region,
 		Document:   f.Document,
 		Instances:  instances,

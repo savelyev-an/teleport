@@ -31,6 +31,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/constants"
 	apidefaults "github.com/gravitational/teleport/api/defaults"
@@ -224,6 +226,7 @@ type Server struct {
 	awsMatchers []services.AWSMatcher
 	// cloudClients are clients used for fetching cloud resources
 	cloudClients cloud.Clients
+	auth         auth.ClientI
 }
 
 // GetClock returns server clock implementation
@@ -755,6 +758,8 @@ func New(addr utils.NetAddr,
 		component = teleport.ComponentNode
 	}
 
+	s.auth = auth
+
 	s.Entry = logrus.WithFields(logrus.Fields{
 		trace.Component:       component,
 		trace.ComponentFields: logrus.Fields{},
@@ -1022,6 +1027,25 @@ func (s *Server) getServerResource() (types.Resource, error) {
 	return s.getServerInfo(), nil
 }
 
+func (s *Server) filterExistingNodes(instances server.EC2Instances) (server.EC2Instances, error) {
+	var filtered []*ec2.Instance
+	for _, inst := range instances.Instances {
+		instID := fmt.Sprintf("%s-%s",
+			instances.AccountID,
+			aws.StringValue(inst.InstanceId))
+		_, err := s.auth.GetNode(s.ctx, s.GetNamespace(), instID)
+		if err != nil {
+			if trace.IsNotFound(err) {
+				filtered = append(filtered, inst)
+				continue
+			}
+			return server.EC2Instances{}, err
+		}
+	}
+	instances.Instances = filtered
+	return instances, nil
+}
+
 func (s *Server) handleEC2Discovery() {
 	go s.cloudWatcher.Run()
 	for inst := range s.cloudWatcher.Instances {
@@ -1029,6 +1053,10 @@ func (s *Server) handleEC2Discovery() {
 		if err != nil {
 			log.Error("error getting AWS SSM client: ", err)
 			return
+		}
+		inst, err := s.filterExistingNodes(inst)
+		if err != nil {
+			log.Errorf("Error filtering existing nodes: %s", err)
 		}
 		installer := server.NewInstallation(client, inst.Instances, inst.Parameters)
 		results, err := installer.DoInstall(inst.Document)
