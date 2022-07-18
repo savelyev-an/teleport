@@ -2563,16 +2563,10 @@ message KubernetesServerSpecV3 {
     // Rotation contains the Kubernetes server CA rotation information.
     Rotation Rotation = 4
         [ (gogoproto.nullable) = false, (gogoproto.jsontag) = "rotation,omitempty" ];
-    // Cluster is a subgke Kubernetes Cluster proxied by this Kubernetes server.
+    // Cluster is a Kubernetes Cluster proxied by this Kubernetes server.
     KubernetesClusterV3 Cluster = 5 [ (gogoproto.jsontag) = "cluster" ];
     // ProxyIDs is a list of proxy IDs this server is expected to be connected to.
     repeated string ProxyIDs = 6 [ (gogoproto.jsontag) = "proxy_ids,omitempty" ];
-}
-
-// KubernetesClusterV3List represents a list of app resources.
-message KubernetesClusterV3List {
-    // Clusters is a list of kubernetes resources.
-    repeated KubernetesClusterV3 Clusters = 1;
 }
 
 // WebTokenV3 describes a web token. Web tokens are used as a transport to relay bearer tokens

@@ -1563,14 +1563,15 @@ message PaginatedResource {
         types.ServerV2 Node = 3 [ (gogoproto.jsontag) = "node,omitempty" ];
         // KubeService represents a KubernetesService resource.
         // DELETE IN 13.0. Deprecated, use KubernetesService field.
-        types.ServerV2 KubeService = 4 [ (gogoproto.jsontag) = "kube_service,omitempty" ];
+        types.ServerV2 KubeService = 4
+            [ (gogoproto.jsontag) = "kube_service,omitempty", deprecated = true ];
         // WindowsDesktop represents a WindowsDesktop resource.
         types.WindowsDesktopV3 WindowsDesktop = 5
             [ (gogoproto.jsontag) = "windows_desktop,omitempty" ];
         // KubeCluster represents a KubeCluster resource.
         types.KubernetesClusterV3 KubeCluster = 6
             [ (gogoproto.jsontag) = "kube_cluster,omitempty" ];
-        // KubernetesService represents a KubernetesService Server resource.
+        // KubernetesServer represents a Kubernetes Server resource.
         types.KubernetesServerV3 KubernetesServer = 7
             [ (gogoproto.jsontag) = "kubernetes_server,omitempty" ];
     }
@@ -2178,13 +2179,19 @@ service AuthService {
     };
     // UpsertKubeServiceV2 adds or updates a kubernetes service.
     // DELETE IN 13.0. Deprecated, use UpsertKubernetesServer
-    rpc UpsertKubeServiceV2(UpsertKubeServiceRequest) returns (types.KeepAlive);
+    rpc UpsertKubeServiceV2(UpsertKubeServiceRequest) returns (types.KeepAlive) {
+        option deprecated = true;
+    };
     // DeleteKubeService removes a kubernetes service.
     // DELETE IN 13.0. Deprecated, use DeleteKubernetesServer
-    rpc DeleteKubeService(DeleteKubeServiceRequest) returns (google.protobuf.Empty);
+    rpc DeleteKubeService(DeleteKubeServiceRequest) returns (google.protobuf.Empty) {
+        option deprecated = true;
+    };
     // DeleteAllKubeServices removes all kubernetes services.
     // DELETE IN 13.0. Deprecated, use DeleteAllKubernetesServers
-    rpc DeleteAllKubeServices(DeleteAllKubeServicesRequest) returns (google.protobuf.Empty);
+    rpc DeleteAllKubeServices(DeleteAllKubeServicesRequest) returns (google.protobuf.Empty) {
+        option deprecated = true;
+    };
 
     // UpsertKubernetesServer adds or updates a kubernetes server.
     rpc UpsertKubernetesServer(UpsertKubernetesServerRequest) returns (types.KeepAlive);

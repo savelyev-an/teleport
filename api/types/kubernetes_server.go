@@ -1,5 +1,5 @@
 /*
-Copyright 2021 Gravitational, Inc.
+Copyright 2022 Gravitational, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ func NewLegacyKubeServer(cluster *KubernetesClusterV3, hostname, hostID string) 
 		})
 }
 
-// NewKubeServersV3FromServer creates a list of kube servers from Server resource.
+// NewKubeServersV3FromServer creates a list of kube servers from a legacy Server resource.
 //
 // DELETE IN 13.0.
 func NewKubeServersV3FromServer(server Server) (result []KubeServer, err error) {
@@ -121,7 +121,7 @@ func NewKubeServersV3FromServer(server Server) (result []KubeServer, err error) 
 	return result, nil
 }
 
-// GetVersion returns the database server resource version.
+// GetVersion returns the kubernetes server resource version.
 func (s *KubernetesServerV3) GetVersion() string {
 	return s.Version
 }
@@ -131,7 +131,7 @@ func (s *KubernetesServerV3) GetTeleportVersion() string {
 	return s.Spec.Version
 }
 
-// GetHostname returns the database server hostname.
+// GetHostname returns the kubernetes server hostname.
 func (s *KubernetesServerV3) GetHostname() string {
 	return s.Spec.Hostname
 }
@@ -223,7 +223,7 @@ func (s *KubernetesServerV3) SetCluster(cluster KubeCluster) error {
 
 // String returns the server string representation.
 func (s *KubernetesServerV3) String() string {
-	return fmt.Sprintf("KubepServer(Name=%v, Version=%v, Hostname=%v, HostID=%v, Cluster=%v)",
+	return fmt.Sprintf("KubeServer(Name=%v, Version=%v, Hostname=%v, HostID=%v, Cluster=%v)",
 		s.GetName(), s.GetTeleportVersion(), s.GetHostname(), s.GetHostID(), s.GetCluster())
 }
 
@@ -266,7 +266,7 @@ func (s *KubernetesServerV3) SetOrigin(origin string) {
 	s.Metadata.SetOrigin(origin)
 }
 
-// GetProxyID returns a list of proxy ids this server is connected to.
+// GetProxyIDs returns a list of proxy ids this server is connected to.
 func (s *KubernetesServerV3) GetProxyIDs() []string {
 	return s.Spec.ProxyIDs
 }
@@ -366,9 +366,9 @@ func (s KubeServers) SortByCustom(sortBy SortBy) error {
 
 // AsResources returns kube servers as type resources with labels.
 func (s KubeServers) AsResources() []ResourceWithLabels {
-	resources := make([]ResourceWithLabels, 0, len(s))
-	for _, server := range s {
-		resources = append(resources, ResourceWithLabels(server))
+	resources := make([]ResourceWithLabels, len(s))
+	for i, server := range s {
+		resources[i] = ResourceWithLabels(server)
 	}
 	return resources
 }
