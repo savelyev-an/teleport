@@ -98,7 +98,7 @@ needs to understand the installer will vary depending on type. See the [Installe
 section for details.
 
 There is room in the above model for a lot more granularity, but it gives us a
-good framework for reasonig about how state is state is handled within the system. Version
+good framework for reasoning about how state is handled within the system. Version
 controllers generate version directives describing what releases should be running where
 and how to install them. The version control loop reconciles desired state with actual
 state, and invokes installers as-needed. Installers attempt to affect installation of
@@ -168,7 +168,7 @@ black box from teleport's perpsective. The target may even be an internally buil
 fork of teleport.
 
 In this case, we want to provide the means to specify the target version and desired script. Teleport
-should then be able to detect when an instance is not running the target that it aught to, and
+should then be able to detect when an instance is not running the target that it ought to, and
 invoke the install script. Teleport should not care about the internals of how the script plans to
 perform the installation. Instances that require upgrades run the script, and may be required to perform
 a graceful restart if the script succeeds. The script may expect inputs (e.g. version string), and
@@ -176,8 +176,9 @@ there may be different scripts to run depending on the nature of the specific no
 or `apt-upgrade`, `yum-upgrade`), but things like selecting the correct processor architecture or OS
 compatibility are likely handled by the script.
 
-In this minimal usecase teleport's role is primarily as a coordinator.  It detects when and where user
-provided scripts should be run, and invokes them.
+In this minimal usecase teleport's role is primarily as a coordinator. It detects when and where user
+provided scripts should be run, and invokes them. All integrity checks are the responsibility
+of the user-provided script, or the underlying install mechanism that it invokes.
 
 
 #### Automatic Installs Usecase
@@ -479,16 +480,21 @@ Hypothetical inventory view:
 ```
 $ tctl inventory ls
 Server ID                               Version    Services       Status
-------------------------------------    -------    -----------    ---------------------------------------------
+------------------------------------    -------    -----------    -----------------------------------------------
 eb115c75-692f-4d7d-814e-e6f9e4e94c01    v0.1.2     ssh,db         installing -> v1.2.3 (17s ago)
 717249d1-9e31-4929-b113-4c64fa2d5005    v1.2.3     ssh,app        online (32s ago)
 bbe161cb-a934-4df4-a9c5-78e18b599601    v0.1.2     ssh            churned during install -> v1.2.3 (6m ago)
+5e6d98ef-e7ec-4a09-b3c5-4698b10acb9e    v0.1.2     k8s            online, must install >= v1.2.2 (eol) (38s ago)
 751b8b44-5f96-450d-b76a-50504aa47e1f    v1.2.3     ssh            online (14s ago)
-3e869f3f-8caa-4df3-aa5c-0a85e884a240    v1.2.3     db             offline (12m ag)
-f67dbc3a-2eff-42c8-87c2-747ee1eedb56    v1.2.2     proxy          online, install required -> v1.2.3 (46s ago)
+3e869f3f-8caa-4df3-aa5c-0a85e884a240    v1.2.3     db             offline (12m ago)
+166dc9b9-fc85-44a0-96ca-f4bec069aa92    v1.2.1     k8s            online, must install >= v1.2.2 (sec) (12s ago)
+f67dbc3a-2eff-42c8-87c2-747ee1eedb56    v1.2.1     proxy          online, install soon -> v1.2.3 (46s ago)
 9db81c94-558a-4f2d-98f9-25e0d1ec0214    v1.2.2     k8s            online, install recommended -> v1.2.3 (20s ago)
 5247f33a-1bd1-4227-8c6e-4464fee2c585    v1.2.3     auth           online (21s ago)
 ...
+
+Warning: 1 instance(s) need upgrade due to newer security patch (sec).
+Warning: 1 instance(s) need upgrade due to having reached end of life (eol).
 ```
 
 Some kind of status summary should also exist for the version-control system as a whole. I'm still
@@ -692,11 +698,6 @@ the new target state before applying it.
 to the `plan`/`apply` workflow that also supports multiparty approval (think access requests but for
 changing the version directive) seems like an obvious feature that we'll want to land eventually.
 
-- Dry-Run: Similar to a `plan` phase, it would be nice to be able to execute dry runs of potential
-directives. What a dry run entails varies by installer, but "download and verify without installing"
-is a reasonable interpretation for local installers at least. It might even be possible to cache a
-package that was downloaded during a dry run and install it immediately during a normal install.
-
 - Notifications/Recommendations: When using a plan/apply or multiparty approval workflow, being able
 to be notified when new versions are available seems reasonable and useful. Ideally, it should be possible
 to provide both the means for external plugins to generate notifications (e.g. via slack), and also for
@@ -708,8 +709,16 @@ or directives, either by providing the ability to have multiple distinct configu
 the same time (e.g. `plan <variant-a>` vs `plan <variant-b>`), or to allow some form of live subselection
 (e.g. `plan --servers env=prod`).
 
+- Dry-Run: Similar to a `plan` phase, it might be nice to be able to execute dry runs of potential
+directives. What a dry run entails varies by installer, but "download and verify without installing"
+is a reasonable interpretation for local installers at least. It might even be possible to cache a
+package that was downloaded during a dry run and install it immediately during a normal install. Note
+that caching may present a new attack vector and implementing it would require careful thought to
+prevent new attack vectors from being introduced. This is a lower priority feature, but it is useful
+to keep in mind so that we don't select an architecture that precludes it as a possibility.
+
 Each of the features described above requires some amount of engineering specific to itself, but they
-also have an overlapping set of needs that we can use to inform the basic directive flow.. We'll cover
+also have an overlapping set of needs that we can use to inform the basic directive flow. We'll cover
 the high-level flow itself, and then examine why it meets our needs.
 
 Directives will come in three distinct flavors: "draft", "pending", and "active".  Draft and pending
@@ -748,12 +757,6 @@ possibly with slightly different wording (e.g. `propose`/`apply`), and an additi
 `tsh version-control review` command. The auth server freezes the target along with an approval policy,
 and waits for sufficient approvals before permitting promotion.
 
-- Dry-Run: Invoking `tctl version-conrol dry-run <id>` marks a pending directive for dry run. Auth servers
-invoke installers in dry-run mode (for those that support it), and periodically embed stats about the
-state of the dry run (churns faults, etc) as attributes on the pending draft object for some time period.
-Since dry runs still trigger installers, multiparty approval would need to define approval thresholds for
-invoking dry runs.
-
 - Notifications/Recommendations: Teleport and/or external plugins periodically load the latest draft
 directive and compare it to current cluster state. Where the draft recommends a different version,
 users are notified and recommended version is displayed when listing servers.
@@ -762,6 +765,13 @@ users are notified and recommended version is displayed when listing servers.
 controller/pipeline, we can also support selecting drafts by name
 (e.g. `tctl version-control plan foo/bar`) so that users can configure their clusters to present multiple
 alternative drafts that can be compared and selected between.
+
+- Dry-Run: Invoking `tctl version-conrol dry-run <id>` marks a pending directive for dry run. Auth servers
+invoke installers in dry-run mode (for those that support it), and periodically embed stats about the
+state of the dry run (churns faults, etc) as attributes on the pending draft object for some time period.
+Since dry runs still trigger installers, multiparty approval would need to define approval thresholds for
+invoking dry runs. As noted in the previous dry run discussion, this feature is tricky and probably of lower
+priority than the others on this list.
 
 
 ### High-Level Configuration
@@ -934,6 +944,10 @@ required by that installer's security model.
 The `local-script` installer is the simplest and most flexible installer, and the first one we will
 be implementing. It runs the provided script on the host that is in need of upgrade, providing
 a basic mechanism for inserting target information (e.g. `version`) as env variables.
+
+While sanity is generally the responsibility of the use for this controller, we can assist by enforcing
+strict limits on allowe characters for inputs/vars (e.g. `^[a-zA-Z0-9\.\-_]*$`). This should be in
+addition to any rules we create for specific values (e.g. `target.version`).
 
 The initial version of the local-script installer will be as bare-bones as possible:
 
@@ -1470,6 +1484,8 @@ system first), and the version directive flow.
 
 - A rudimentary version of rollout health monitoring and automatic-pause system.
 
+- Interactive `tctl version-control setup` command.
+
 
 ### TUF-Based System MVP
 
@@ -1541,7 +1557,63 @@ extended feature set.
 - Other remote installers (e.g. k8s).
 
 
-## Notes
+## Other Stuff
+
+### Anonymized Metrics
+
+While not uniquely related to the upgrade system, we are going to start looking toward supporting opt-in
+collection of anonymized metrics from users. The first instance of this new feature will appear alongside
+the TUF-based system in the form of additional optional headers that can be appended to TUF metadata requests
+and can be aggregated by the TUF server.
+
+The heart of the anonymized metrics system will be two new abstract elements to be added to cluster-level state
+(which configuration object they should appear in is TBD):
+
+```
+enabled: yes|no
+random_value: <random-bytes>
+```
+
+If a user chooses to enable anonymized metrics for a cluster, a random value with some reasonably large entropy
+will be generated. This will form the basis for an anonymous identifier that will allow us to distinquish between
+metrics from different clusters without the identifier revealing anything about that cluster's identity.
+The random value can be used directly as an identifier, or as a MAC key to be used to hash some other value.  I lean
+toward preferring a scheme where the presented identifier rotates periodically (e.g. monthly).
+If combined with the right amount of "bucketing" of any scalar values, this should help us prevent the emergence of
+any "long term" narratives related to a single identifier, thereby further improving anonymization
+
+I am currently leaning toward the idea of using the random value to create a keyed/salted hash of the current year/month
+gmt (`YYYY-MM`) s.t. each month is effectively a separate dataset with separate identifiers. This kind of scheme would
+both produce cleaner datasets and improva anonymitity by effectively causing all clusters across the ecosystem to
+rotate their IDs simultaneously. Still thinking this through, so maybe there are issues with this particular angle, but
+the aformentioned properties are appealing.
+
+To start with, cluster identifiers will be the only data the user is actually opting into sharing. The TUF server
+will know the version of the client calling it, and whether it is an open source or enterprise request. The optional
+cluster identifier will be what transforms this information from being just useful per-request debug into,
+into a meaningful metric about the state of the teleport ecosystem. By using the cluster ID to deduplicate requests,
+will will start to be able to make more informed guesses about the scope of the teleport ecosystem and the distribution
+of teleport versions across it.
+
+We will therefore end up collecting datapoints of the following format:
+
+```
+version: <semver>
+flavor: <enum: oss|ent>
+id: <random-string>
+``` 
+
+A few notes about working with this system:
+
+- If scalar values are added in the future (e.g. cluster size), they will need to be bucketed s.t. no one
+cluster identifier is unique enough to be traceable across ID rotations, or unique enough to be correlated
+with a given user should their cluster size (approximate or not) be shared for any reason.
+
+- Cluster identifiers (both the seed/salt value and the ephemeral identifier) should be treated as secrets and
+not emitted in any logs or in any tctl commands that don't include `--with-secrets`.
+
+- We should decide in advance on a set of reviewers for any additional metrics from amongst our most cyni
+
 
 ### Open Questions
 
