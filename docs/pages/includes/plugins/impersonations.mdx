@@ -1,17 +1,20 @@
-<ScopedBlock opened={true} 
-  scopeOnly={true}
-  scope={["cloud"]}
->
-  
-Teleport Cloud requires authenticating with a role that can create and impersonate
-the `access-plugin` role and user. Log in with `tsh` with a user that has this role
-or has a role with these `allow` rules.
+Access request plugins authenticate to your Teleport cluster by presenting a
+certificate signed by the Auth Service. To generate this certificate, your
+`tctl` user will need permissions to _impersonate_ the `access-plugin` role and
+user.
 
-```
+<ScopedBlock scope={["oss", "enterprise"]}>If you are using `tctl` from the Auth
+Service host, you will already have impersonation privileges.</ScopedBlock>
+
+To grant your user impersonation privileges for `plugin-admin`, define a role
+called `plugin-admin-impersonator` by pasting the following YAML document into
+a file called `plugin-admin-impersonator.yaml`:
+
+```yaml
 kind: role
 version: v4
 metadata:
-  name: plugin-admin
+  name: plugin-admin-impersonator
 spec:
   allow:
     impersonate:
@@ -27,6 +30,35 @@ spec:
 
 ```
 
-Learn more about impersonation in [Impersonating Teleport Users](../../access-controls/guides/impersonation.mdx).
+Create the `plugin-admin-impersonator` role: 
 
-</ScopedBlock>
+```code
+$ tctl create -f plugin-admin-impersonator.yaml
+```
+
+Retrieve your user definition:
+
+```code
+$ TELEPORT_USER=$(tsh status | awk -F "      " '/Logged in as/{print $2}')
+$ tctl get users/${TELEPORT_USER?} > myuser.yaml
+```
+
+Edit `myuser.yaml` to include the role you just created:
+
+```diff
+  roles:
+   - access
+   - auditor
+   - editor
++  - plugin-admin-impersonator
+```
+
+Apply your changes:
+
+```code
+$ tctl create -f myuser.yaml
+```
+
+Log out of your Teleport cluster and log in again. You will now be able to
+generate signed certificates for the `access-plugin` role and user.
+

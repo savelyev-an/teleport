@@ -1,23 +1,31 @@
-Teleport's plugins use the `access-plugin` user to manage access requests. In order to act as
-the user, the plugin must present the Teleport Auth Service with valid identity files.
-We export the identity files for the user using [`tctl auth sign`](../../setup/reference/cli.mdx#tctl-auth-sign).
+Generate a signed certificate for the `access-plugin` user that enables
+the user to authenticate to your Teleport cluster.
+
+The following `tctl auth sign` command impersonates the `access-plugin` user,
+generates signed credentials, and writes one or more files to the local
+directory:
 
 <Tabs>
   <TabItem label="Self-Hosted" scope={["oss","enterprise"]}>
+
 ```code
 $ tctl auth sign --format=tls --user=access-plugin --out=auth --ttl=2190h
 # ...
 ```
 
-The above sequence should result in three PEM encoded files being generated: `auth.crt`, `auth.key`, and `auth.cas` (certificate, private key, and CA certs respectively).
+The above sequence should result in three PEM-encoded files: `auth.crt`,
+`auth.key`, and `auth.cas` (certificate, private key, and CA certs
+respectively).
+
 </TabItem>
   <TabItem label="Cloud" scope={["cloud"]}>
+
 ```code
 $ tctl auth sign --user=access-plugin --out=auth.pem --ttl=2190h
 # ...
 ```
 
-The above sequence should result in one PEM encoded file: `auth.pem`.
+The above sequence should result in one PEM-encoded file: `auth.pem`.
 
   </TabItem>
 
@@ -27,5 +35,10 @@ The above sequence should result in one PEM encoded file: `auth.pem`.
   type="note"
   title="Certificate Lifetime"
 >
-  By default, [`tctl auth sign`](../../setup/reference/cli.mdx#tctl-auth-sign) produces certificates with a relatively short lifetime. For production deployments, the `--ttl` flag can be used to ensure a more practical certificate lifetime. `--ttl=8760h` exports a 1 year token
+
+  By default, `tctl auth sign` produces certificates with a relatively short
+  lifetime. For production deployments, you can use the `--ttl` flag to ensure a
+  more practical certificate lifetime, e.g., `--ttl=8760h` to export a one-year
+  certificate.
+
 </Admonition>

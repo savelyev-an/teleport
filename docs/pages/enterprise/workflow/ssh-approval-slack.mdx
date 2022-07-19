@@ -1,20 +1,23 @@
 ---
-title: Teleport's integration with Slack
-description: This guide explains how to setup a Slack plugin for Teleport for privilege elevation approvals.
-h1: Teleport Slack Plugin Setup
+title: Access Requests with Slack
+description: How to set up Teleport's Slack plugin for privilege elevation approvals.
 ---
 
-This guide will explain how to set up Teleport with Slack. Teleport's Slack
-integration notifies individuals and channels of access requests.
+This guide will explain how to set up Slack to receive access request messages
+from Teleport. Teleport's Slack integration notifies individuals and channels of
+access requests. Users can then approve and deny access requests within Slack,
+making it easier to implement security best practices without compromising
+productivity.
+
+{/* TODO: 
+Remove this notice in favor of the docs-wide scope labels*/}
 
 <Notice
   type="danger"
   scope="oss"
 >
 
-  This guide requires Teleport Cloud or Teleport Enterprise. The open source
-  edition of Teleport only supports [GitHub](../../setup/admin/github-sso.mdx)
-  as an SSO provider.
+  This guide requires Teleport Cloud or Teleport Enterprise.
 
 </Notice>
 
@@ -36,7 +39,9 @@ Here is an example of sending an access request via Teleport's Slack plugin:
 
 ## Prerequisites
 
-- Slack admin privileges to create an app and install it to your workspace
+- Slack admin privileges to create an app and install it to your workspace. Your
+    Slack profile must have the "Workspace Owner" or "Workspace Admin" banner
+    below your profile picture.
 
 (!/docs/pages/includes/commercial-prereqs-tabs.mdx!)
 
@@ -44,8 +49,8 @@ Here is an example of sending an access request via Teleport's Slack plugin:
 
 ## Step 1/7. Install the Teleport Slack plugin
 
-We currently only provide `linux-amd64` binaries. You can also compile these plugins
-from source.
+We currently only provide `linux-amd64` binaries. You can also compile these
+plugins from source.
 
 <Notice scope={["enterprise"]} type="tip">
 We recommend installing Teleport plugins on the same host as the Teleport
@@ -62,7 +67,8 @@ and will require access to both the public internet and the Teleport Auth Servic
   ```
 </TabItem>
 <TabItem label="From Source">
-  To install from source you need `git` and `go >= (=teleport.golang=)` installed.
+  To install from source you need `git` and `go` >= (=teleport.golang=)
+  installed.
 
   ```code
   # Check out the teleport-plugins repository
@@ -70,12 +76,23 @@ and will require access to both the public internet and the Teleport Auth Servic
   $ cd teleport-plugins/access/slack
   $ make
   ```
-  Place `./teleport-access-slack/teleport-slack` into an appropriate location within the sytem's PATH, e.g.`/usr/local/bin`.
-  ```code
-  mv ./teleport-access-slack/teleport-slack /usr/local/bin
+  
+  Place the `teleport-slack` binary into an appropriate location
+  within the sytem's `PATH`, e.g., `/usr/local/bin`:
+
+  ```code 
+  $ mv ./build/teleport-slack /usr/local/bin 
   ```
-</TabItem>
+
+</TabItem> 
 </Tabs>
+
+  Make sure the binary is installed:
+
+  ```code
+  $ teleport-slack version
+  teleport-slack v(=teleport.plugin.version=) git:teleport-slack-v(=teleport.plugin.version=)-fffffffff go(=teleport.golang=)
+  ```
 
 ## Step 2/7. Create a user and role for the plugin
 
