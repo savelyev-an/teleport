@@ -437,6 +437,41 @@ func (conf *FileConfig) CheckAndSetDefaults() error {
 		}
 	}
 
+	matchers := make([]AWSMatcher, 0, len(conf.SSH.AWSMatchers))
+
+	for _, matcher := range conf.SSH.AWSMatchers {
+		if matcher.InstallParams == nil {
+			fmt.Println(matcher.InstallParams)
+
+			matcher.InstallParams = &InstallParams{
+				JoinParams: JoinParams{
+					TokenName: defaults.DefaultIamInviteTokenName,
+					Method:    types.JoinMethodIAM,
+				},
+			}
+		} else {
+			method := matcher.InstallParams.JoinParams.Method
+			if method == "" {
+				matcher.InstallParams.JoinParams.Method = types.JoinMethodIAM
+			} else if method != types.JoinMethodIAM {
+				return trace.BadParameter("Only IAM joining is supported during discovery at this time")
+			}
+		}
+
+		if matcher.SSM == nil {
+			matcher.SSM = &AWSSSM{
+				Document: defaults.AWSDefaultInstallerDocument,
+			}
+		} else {
+			if matcher.SSM.Document == "" {
+				matcher.SSM.Document = defaults.AWSDefaultInstallerDocument
+			}
+		}
+		matchers = append(matchers, matcher)
+	}
+
+	conf.SSH.AWSMatchers = matchers
+
 	return nil
 }
 
@@ -1183,9 +1218,24 @@ type AWSMatcher struct {
 	Regions []string `yaml:"regions,omitempty"`
 	// Tags are AWS tags to match.
 	Tags map[string]apiutils.Strings `yaml:"tags,omitempty"`
-	// SSMDocument is the ssm command document to execute for EC2
-	// installation
-	SSMDocument string `yaml:"ssm_command_document"`
+	// InstallParams sets the join method when installing on
+	// discovered EC2 nodes
+	InstallParams *InstallParams `yaml:"install,omitempty"`
+	// SSM provides options to use when sending a document command to
+	// an EC2 node
+	SSM *AWSSSM `yaml:"ssm,omitempty"`
+}
+
+// InstallParams sets join method to use on discovered nodes
+type InstallParams struct {
+	JoinParams JoinParams `yaml:"join_params,omitempty"`
+}
+
+// AWSSSM provides options to use when executing SSM documents
+type AWSSSM struct {
+	// Document is the name of the document to use when executing an
+	// SSM command
+	Document string `yaml:"document,omitempty"`
 }
 
 // Database represents a single database proxied by the service.

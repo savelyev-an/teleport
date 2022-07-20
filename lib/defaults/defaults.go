@@ -767,3 +767,8 @@ const (
 	// TeleportConfigVersionV2 is the teleport proxy configuration v2 version.
 	TeleportConfigVersionV2 string = "v2"
 )
+
+const (
+	AWSDefaultInstallerDocument = "TeleportDiscoveryInstaller"
+	DefaultIamInviteTokenName   = "aws-discovery-iam-token"
+)

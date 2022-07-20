@@ -399,6 +399,7 @@ func TestSSHSection(t *testing.T) {
 		expectError               require.ErrorAssertionFunc
 		expectEnabled             require.BoolAssertionFunc
 		expectAllowsTCPForwarding require.BoolAssertionFunc
+		expectedAWSSection        []AWSMatcher
 	}{
 		{
 			desc:                      "default",
@@ -444,6 +445,94 @@ func TestSSHSection(t *testing.T) {
 				cfg["ssh_service"].(cfgMap)["port_forwarding"] = "banana"
 			},
 			expectError: require.Error,
+		}, {
+			desc:        "AWS section is filled with defaults",
+			expectError: require.NoError,
+			mutate: func(cfg cfgMap) {
+				cfg["ssh_service"].(cfgMap)["enabled"] = "yes"
+				cfg["ssh_service"].(cfgMap)["aws"] = []cfgMap{
+					{
+						"types":   []string{"ec2"},
+						"regions": []string{"eu-central-1"},
+						"tags": cfgMap{
+							"discover_teleport": "yes",
+						},
+					},
+				}
+			},
+			expectedAWSSection: []AWSMatcher{
+				{
+					Types:   []string{"ec2"},
+					Regions: []string{"eu-central-1"},
+					Tags: map[string]apiutils.Strings{
+						"discover_teleport": []string{"yes"},
+					},
+					InstallParams: &InstallParams{
+						JoinParams: JoinParams{
+							TokenName: defaults.DefaultIamInviteTokenName,
+							Method:    types.JoinMethodIAM,
+						},
+					},
+					SSM: &AWSSSM{Document: defaults.AWSDefaultInstallerDocument},
+				},
+			},
+		}, {
+			desc:        "AWS section is filled with custom configs",
+			expectError: require.NoError,
+			mutate: func(cfg cfgMap) {
+				cfg["ssh_service"].(cfgMap)["enabled"] = "yes"
+				cfg["ssh_service"].(cfgMap)["aws"] = []cfgMap{
+					{
+						"types":   []string{"ec2"},
+						"regions": []string{"eu-central-1"},
+						"tags": cfgMap{
+							"discover_teleport": "yes",
+						},
+						"install": cfgMap{
+							"join_params": cfgMap{
+								"token_name": "hello-iam-a-token",
+								"method":     "iam",
+							},
+						},
+						"ssm": cfgMap{
+							"document": "hello_document",
+						},
+					},
+				}
+			},
+			expectedAWSSection: []AWSMatcher{
+				{
+					Types:   []string{"ec2"},
+					Regions: []string{"eu-central-1"},
+					Tags: map[string]apiutils.Strings{
+						"discover_teleport": []string{"yes"},
+					},
+					InstallParams: &InstallParams{
+						JoinParams: JoinParams{
+							TokenName: "hello-iam-a-token",
+							Method:    types.JoinMethodIAM,
+						},
+					},
+					SSM: &AWSSSM{Document: "hello_document"},
+				},
+			},
+		}, {
+			desc:        "AWS section is filled with invalid join method",
+			expectError: require.Error,
+			mutate: func(cfg cfgMap) {
+				cfg["ssh_service"].(cfgMap)["enabled"] = "yes"
+				cfg["ssh_service"].(cfgMap)["aws"] = []cfgMap{
+					{
+						"install": cfgMap{
+							"join_params": cfgMap{
+								"token_name": "hello-iam-a-token",
+								"method":     "token",
+							},
+						},
+					},
+				}
+			},
+			expectedAWSSection: nil,
 		},
 	}
 
@@ -460,6 +549,10 @@ func TestSSHSection(t *testing.T) {
 
 			if testCase.expectAllowsTCPForwarding != nil {
 				testCase.expectAllowsTCPForwarding(t, cfg.SSH.AllowTCPForwarding())
+			}
+
+			if testCase.expectedAWSSection != nil {
+				require.Equal(t, testCase.expectedAWSSection, cfg.SSH.AWSMatchers)
 			}
 		})
 	}

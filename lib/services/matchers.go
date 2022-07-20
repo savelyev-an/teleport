@@ -29,6 +29,13 @@ type ResourceMatcher struct {
 	Labels types.Labels
 }
 
+// AWSSSM provides options to use when executing SSM documents
+type AWSSSM struct {
+	// Document is the name of the document to use when executing an
+	// SSM command
+	Document string
+}
+
 // AWSMatcher matches AWS databases.
 type AWSMatcher struct {
 	// Types are AWS database types to match, "rds" or "redshift".
@@ -37,9 +44,13 @@ type AWSMatcher struct {
 	Regions []string
 	// Tags are AWS tags to match.
 	Tags types.Labels
-	// SSMDocument is the SSM document used to execute the
-	// installation script
-	SSMDocument string
+	// JoinMethod is the join method to use when discovering an EC2 node
+	JoinMethod types.JoinMethod
+	// JoinToken is the token to use when discovering an EC2 node
+	JoinToken string
+	// SSM provides options to use when sending a document command to
+	// an EC2 node
+	SSM *AWSSSM `yaml:"ssm,omitempty"`
 }
 
 // MatchResourceLabels returns true if any of the provided selectors matches the provided database.

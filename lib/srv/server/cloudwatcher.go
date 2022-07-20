@@ -87,7 +87,7 @@ func NewCloudServerWatcher(ctx context.Context, matchers []services.AWSMatcher, 
 				return nil, trace.Wrap(err)
 			}
 			fetcher :=
-				newEc2InstanceFetcher(matcher, region, matcher.SSMDocument, cl, matcher.Tags)
+				newEc2InstanceFetcher(matcher, region, matcher.SSM.Document, cl, matcher.Tags)
 			if err != nil {
 				return nil, trace.Wrap(err)
 			}
