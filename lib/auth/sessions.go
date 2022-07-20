@@ -100,7 +100,7 @@ func (s *Server) CreateAppSession(ctx context.Context, req types.CreateAppSessio
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
-	if err = s.Identity.UpsertAppSession(ctx, session); err != nil {
+	if err = s.UpsertAppSession(ctx, session); err != nil {
 		return nil, trace.Wrap(err)
 	}
 	log.Debugf("Generated application web session for %v with TTL %v.", req.Username, ttl)
@@ -245,7 +245,7 @@ func (s *Server) createSessionCert(user types.User, sessionTTL time.Duration, pu
 	// It's safe to extract the roles and traits directly from services.User
 	// because this occurs during the user creation process and services.User
 	// is not fetched from the backend.
-	accessInfo, err := services.AccessInfoFromUser(user, s.Access)
+	accessInfo, err := services.AccessInfoFromUser(user, s)
 	if err != nil {
 		return nil, nil, trace.Wrap(err)
 	}
@@ -303,7 +303,7 @@ func (s *Server) CreateSnowflakeSession(ctx context.Context, req types.CreateSno
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
-	if err = s.Identity.UpsertSnowflakeSession(ctx, session); err != nil {
+	if err = s.UpsertSnowflakeSession(ctx, session); err != nil {
 		return nil, trace.Wrap(err)
 	}
 	log.Debugf("Generated Snowflake web session for %v with TTL %v.", req.Username, ttl)

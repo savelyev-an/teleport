@@ -21,6 +21,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/gravitational/trace"
+	"golang.org/x/crypto/ssh"
+
 	"github.com/gravitational/teleport/api/client/proto"
 	"github.com/gravitational/teleport/api/constants"
 	"github.com/gravitational/teleport/api/types"
@@ -29,8 +32,6 @@ import (
 	"github.com/gravitational/teleport/lib/events"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/utils"
-	"github.com/gravitational/trace"
-	"golang.org/x/crypto/ssh"
 )
 
 // AuthenticateUserRequest is a request to authenticate interactive user
@@ -239,7 +240,7 @@ func (s *Server) authenticateUser(ctx context.Context, req AuthenticateUserReque
 	case constants.SecondFactorOptional:
 		// 2FA is optional. Make sure that a user does not have MFA devices
 		// registered.
-		devs, err := s.Identity.GetMFADevices(ctx, user, false /* withSecrets */)
+		devs, err := s.Services.GetMFADevices(ctx, user, false /* withSecrets */)
 		if err != nil && !trace.IsNotFound(err) {
 			return nil, "", trace.Wrap(err)
 		}

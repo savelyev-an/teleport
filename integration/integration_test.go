@@ -3387,7 +3387,7 @@ func waitForNodeCount(ctx context.Context, t *helpers.TeleInstance, clusterName 
 func waitForTunnelConnections(t *testing.T, authServer *auth.Server, clusterName string, expectedCount int) {
 	var conns []types.TunnelConnection
 	for i := 0; i < 30; i++ {
-		conns, err := authServer.Presence.GetTunnelConnections(clusterName)
+		conns, err := authServer.GetTunnelConnections(clusterName)
 		require.NoError(t, err)
 		if len(conns) == expectedCount {
 			return
@@ -6458,8 +6458,10 @@ func testListResourcesAcrossClusters(t *testing.T, suite *integrationTestSuite) 
 	}{
 		{
 			name: "all nodes",
-			expected: []string{"root-zero", "root-one", "root-two",
-				"leaf-zero", "leaf-one", "leaf-two"},
+			expected: []string{
+				"root-zero", "root-one", "root-two",
+				"leaf-zero", "leaf-one", "leaf-two",
+			},
 		},
 		{
 			name:     "leaf only",
@@ -6501,8 +6503,10 @@ func testListResourcesAcrossClusters(t *testing.T, suite *integrationTestSuite) 
 	}{
 		{
 			name: "all",
-			expected: []string{"root-one", "root-two",
-				"leaf-one", "leaf-two"},
+			expected: []string{
+				"root-one", "root-two",
+				"leaf-one", "leaf-two",
+			},
 		},
 		{
 			name:     "leaf only",
@@ -6648,7 +6652,7 @@ func testSFTP(t *testing.T, suite *integrationTestSuite) {
 	})
 
 	t.Run("chmod", func(t *testing.T) {
-		err = sftpClient.Chmod(testFilePath, 0777)
+		err = sftpClient.Chmod(testFilePath, 0o777)
 		require.NoError(t, err)
 	})
 
