@@ -273,3 +273,9 @@ const (
 	// allowed AWS role ARNs.
 	TraitAWSRoleARNs = "aws_role_arns"
 )
+
+const (
+	// CertExtensionTeleportRouteToCluster is used to encode
+	// the target cluster to route to in the certificate
+	CertExtensionTeleportRouteToCluster = "teleport-route-to-cluster"
+)

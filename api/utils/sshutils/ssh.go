@@ -25,7 +25,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/constants"
 	"github.com/gravitational/teleport/api/defaults"
 	"github.com/gravitational/trace"
@@ -184,7 +183,7 @@ func AsAgentKeys(sshCert *ssh.Certificate, privKey []byte) ([]agent.AddedKey, er
 	}
 
 	// put a teleport identifier along with the teleport user into the comment field
-	clusterName := sshCert.Permissions.Extensions[teleport.CertExtensionTeleportRouteToCluster]
+	clusterName := sshCert.Permissions.Extensions[constants.CertExtensionTeleportRouteToCluster]
 	comment := TeleportAgentKeyComment(sshCert.KeyId, clusterName)
 
 	// On Windows, return the certificate with the private key embedded.
