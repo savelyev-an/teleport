@@ -87,7 +87,7 @@ func (r ResourceBaseReconciler) Do(ctx context.Context, req ctrl.Request, obj kc
 	if isMarkedToBeDeleted {
 		if hasDeletionFinalizer {
 			log.Info("deleting object in Teleport", "kind", kind, "name", name)
-			if err := r.DeleteExternal(ctx, obj); !trace.IsNotFound(err) {
+			if err := r.DeleteExternal(ctx, obj); err != nil && !trace.IsNotFound(err) {
 				return ctrl.Result{}, trace.Wrap(err)
 			}
 
