@@ -47,6 +47,23 @@ The Teleport [proxy service](https://goteleport.com/docs/architecture/proxy/) ca
 
 The multi-region option is currently opt-in by default. Once you have an account, please reach out to your account manager, customer success engineer, or support@goteleport.com. A future update will expand the region availability and make all regions available by default.
 
+## Releases
+
+Teleport Cloud customers are typically running the latest release of the
+Teleport Auth and Proxy service.
+
+Teleport Cloud performs patch upgrades on a weekly basis and major upgrades on
+a quarterly basis. Teleport Cloud waits for the first minor release before a
+major upgrade (for example, 10.1 instead of 10.0). This typically occurs 3-4
+weeks after a major release.
+
+Patch releases are fully backward compatible and require no actions by the
+customer.
+
+Major releases do require customers to upgrade all agents within 3 months of
+the upgrade. Failure to upgrade agents to the latest major release during this
+window may lead to compatibility issues with Teleport Cloud and a loss of
+access to your infrastructure.
 
 ## Service Level Agreement
 
