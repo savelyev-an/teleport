@@ -24,6 +24,8 @@ import (
 	"strings"
 	"time"
 
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/client/proto"
 	apidefaults "github.com/gravitational/teleport/api/defaults"
@@ -170,6 +172,9 @@ type InitConfig struct {
 	WindowsDesktops services.WindowsDesktops
 
 	SessionTrackerService services.SessionTrackerService
+
+	// TraceClient is used to forward spans to the upstream telemetry collector
+	TraceClient otlptrace.Client
 }
 
 // Init instantiates and configures an instance of AuthServer
