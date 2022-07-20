@@ -85,7 +85,10 @@ func (b *Bot) initializeConfig() {
 		Oneshot:         false,
 	}
 
-	_ = b.cfg.CheckAndSetDefaults()
+	// We do our own init because config's "CheckAndSetDefaults" is too linked with tbot logic and invokes
+	// `addRequiredConfigs` on each Storage Destination
+	rootMemoryStore.CheckAndSetDefaults()
+	destMemoryStore.CheckAndSetDefaults()
 
 	for _, artifact := range identity.GetArtifacts() {
 		_ = destMemoryStore.Write(artifact.Key, []byte{})
