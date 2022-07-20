@@ -81,6 +81,7 @@ type AuthCommand struct {
 	authExport   *kingpin.CmdClause
 	authSign     *kingpin.CmdClause
 	authRotate   *kingpin.CmdClause
+	authLS       *kingpin.CmdClause
 }
 
 // Initialize allows TokenCommand to plug itself into the CLI parser
@@ -133,6 +134,8 @@ func (a *AuthCommand) Initialize(app *kingpin.Application, config *service.Confi
 	a.authRotate.Flag("manual", "Activate manual rotation , set rotation phases manually").BoolVar(&a.rotateManualMode)
 	a.authRotate.Flag("type", "Certificate authority to rotate, rotates host, user and database CA by default").StringVar(&a.rotateType)
 	a.authRotate.Flag("phase", fmt.Sprintf("Target rotation phase to set, used in manual rotation, one of: %v", strings.Join(types.RotatePhases, ", "))).StringVar(&a.rotateTargetPhase)
+
+	a.authLS = auth.Command("ls", "List connected auth servers")
 }
 
 // TryRun takes the CLI command as an argument (like "auth gen") and executes it
@@ -147,6 +150,8 @@ func (a *AuthCommand) TryRun(ctx context.Context, cmd string, client auth.Client
 		err = a.GenerateAndSignKeys(ctx, client)
 	case a.authRotate.FullCommand():
 		err = a.RotateCertAuthority(ctx, client)
+	case a.authLS.FullCommand():
+		err = a.ListAuthServers(ctx, client)
 	default:
 		return false, nil
 	}
@@ -398,6 +403,23 @@ func (a *AuthCommand) RotateCertAuthority(ctx context.Context, client auth.Clien
 		fmt.Printf("Updated rotation phase to %q. To check status use 'tctl status'\n", a.rotateTargetPhase)
 	} else {
 		fmt.Printf("Initiated certificate authority rotation. To check status use 'tctl status'\n")
+	}
+
+	return nil
+}
+
+// ListAuthServers prints a list of connected auth servers
+func (a *AuthCommand) ListAuthServers(ctx context.Context, clusterAPI auth.ClientI) error {
+	servers, err := clusterAPI.GetAuthServers()
+	if err != nil {
+		return trace.Wrap(err)
+	}
+
+	for _, s := range servers {
+		fmt.Printf("%s\n", s.GetName())
+		fmt.Printf("%s\n", s.GetAddr())
+		fmt.Printf("%s\n", s.GetHostname())
+		fmt.Println()
 	}
 
 	return nil

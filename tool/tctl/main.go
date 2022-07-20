@@ -42,6 +42,7 @@ func main() {
 		&common.LockCommand{},
 		&common.BotsCommand{},
 		&common.InventoryCommand{},
+		&common.ProxyCommand{},
 	}
 	common.Run(commands)
 }
