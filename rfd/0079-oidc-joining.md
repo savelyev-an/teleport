@@ -92,10 +92,16 @@ spec:
   join_method: oidc-jwt
   issuer_url: https://accounts.google.com
   allow:
-  - claims: claims.aud == "noah.teleport.sh" && claims.google.compute_engine.project_id == "my-project" && claims.google.compute_engine.instance_name == "an-instance"
+  - aud: "noah.teleport.sh"
+    google:
+      compute_engine:
+        project_id: "my-project"
+        instance_name: "an-instance"
 ```
 
-To allow the user to configure rules for what identities will be accepted, the `claims` field will accept a [Common Expression Language (CEL)](https://github.com/google/cel-spec) expression that must evaluate to a boolean value. The user is allowed to configure as many expressions as they want, and the registration will be allowed if **at least one** expression evaluates to true. This allows a large degree of flexibility in the complexity of rules users can configure, but still allows simple expressions.
+To allow the user to configure rules for what identities will be accepted, we will leverage the `allow` field similar to how it works with the IAM joining. This performs partial equality/matching with the YAML provided, and the claims within the token. As long as all fields configured in one block match with those in the token, then it will be considered valid for registration. This provides a rough mechanism for configuring AND/OR logic.
+
+To do this, we will need to change the structure of `ProvisionTokenSpecV2`, as the data under `Allow` is currently specifically designed around IAM joining. I suggest that we change this from `repeated TokenRule` to `repeated google.protobuf.Any`, and then [unmarshal it to a more specific message type](https://pkg.go.dev/google.golang.org/protobuf/types/known/anypb#hdr-Unmarshaling_an_Any) based on the value of `JoinMethod`. This will allow us more flexibility going forward as we introduce more joining methods, and avoid polluting a single message type with configuration values that apply to all joining methods.
 
 Users must also configure the `issuer_url`. This must be a host on which there is a compliant `/.well-known/openid-configuration` endpoint. Information about the structure of this endpoint can be found in the [OIDC Core and Discovery specifications.](#references-and-resources)
 
