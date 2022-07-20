@@ -20,11 +20,12 @@ package sshutils
 
 import (
 	"crypto/subtle"
-	"fmt"
 	"io"
 	"net"
 	"runtime"
+	"strings"
 
+	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/constants"
 	"github.com/gravitational/teleport/api/defaults"
 	"github.com/gravitational/trace"
@@ -105,7 +106,7 @@ func ParseAuthorizedKeys(authorizedKeys [][]byte) ([]ssh.PublicKey, error) {
 func ProxyClientSSHConfig(sshCert, privKey []byte, caCerts [][]byte) (*ssh.ClientConfig, error) {
 	cert, err := ParseCertificate(sshCert)
 	if err != nil {
-		return nil, trace.Wrap(err, "failed to extract username from SSH certificate")
+		return nil, trace.Wrap(err)
 	}
 
 	authMethod, err := AsAuthMethod(cert, privKey)
@@ -160,6 +161,19 @@ func AsAuthMethod(sshCert *ssh.Certificate, privKey []byte) (ssh.AuthMethod, err
 	return ssh.PublicKeys(signer), nil
 }
 
+const (
+	agentCommentPrefix    = "teleport"
+	agentCommentSeparator = ":"
+)
+
+func TeleportAgentKeyComment(userName, clusterName string) string {
+	return strings.Join([]string{agentCommentPrefix, userName, clusterName}, agentCommentSeparator)
+}
+
+func IsTeleportAgentKey(key *agent.Key) bool {
+	return strings.HasPrefix(key.Comment, agentCommentPrefix+agentCommentSeparator)
+}
+
 // AsAgentKeys converts Key struct to a []*agent.AddedKey. All elements
 // of the []*agent.AddedKey slice need to be loaded into the agent!
 func AsAgentKeys(sshCert *ssh.Certificate, privKey []byte) ([]agent.AddedKey, error) {
@@ -170,7 +184,8 @@ func AsAgentKeys(sshCert *ssh.Certificate, privKey []byte) ([]agent.AddedKey, er
 	}
 
 	// put a teleport identifier along with the teleport user into the comment field
-	comment := fmt.Sprintf("teleport:%v", sshCert.KeyId)
+	clusterName := sshCert.Permissions.Extensions[teleport.CertExtensionTeleportRouteToCluster]
+	comment := TeleportAgentKeyComment(sshCert.KeyId, clusterName)
 
 	// On Windows, return the certificate with the private key embedded.
 	if runtime.GOOS == constants.WindowsOS {

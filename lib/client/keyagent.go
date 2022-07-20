@@ -233,7 +233,7 @@ func (a *LocalKeyAgent) LoadKey(key Key) (*agent.AddedKey, error) {
 	return &agentKeys[0], nil
 }
 
-// UnloadKey will unload key for user from the teleport ssh agent as well as
+// UnloadKey will unload key for user and cluster from the teleport ssh agent as well as
 // the system agent.
 func (a *LocalKeyAgent) UnloadKey() error {
 	agents := []agent.Agent{a.Agent}
@@ -241,7 +241,7 @@ func (a *LocalKeyAgent) UnloadKey() error {
 		agents = append(agents, a.sshAgent)
 	}
 
-	// iterate over all agents we have and unload keys for this user
+	// iterate over all agents we have and unload keys for this user and cluster
 	for _, agent := range agents {
 		// get a list of all keys in the agent
 		keyList, err := agent.List()
@@ -249,9 +249,9 @@ func (a *LocalKeyAgent) UnloadKey() error {
 			a.log.Warnf("Unable to communicate with agent and list keys: %v", err)
 		}
 
-		// remove any teleport keys we currently have loaded in the agent for this user
+		// remove any teleport keys we currently have loaded in the agent for this user and cluster
 		for _, key := range keyList {
-			if key.Comment == fmt.Sprintf("teleport:%v", a.username) {
+			if key.Comment == sshutils.TeleportAgentKeyComment(a.username, a.siteName) {
 				err = agent.Remove(key)
 				if err != nil {
 					a.log.Warnf("Unable to communicate with agent and remove key: %v", err)
@@ -271,7 +271,7 @@ func (a *LocalKeyAgent) UnloadKeys() error {
 		agents = append(agents, a.sshAgent)
 	}
 
-	// iterate over all agents we have
+	// iterate over all agents we have and unload keys
 	for _, agent := range agents {
 		// get a list of all keys in the agent
 		keyList, err := agent.List()
@@ -281,9 +281,8 @@ func (a *LocalKeyAgent) UnloadKeys() error {
 
 		// remove any teleport keys we currently have loaded in the agent
 		for _, key := range keyList {
-			if strings.HasPrefix(key.Comment, "teleport:") {
-				err = agent.Remove(key)
-				if err != nil {
+			if sshutils.IsTeleportAgentKey(key) {
+				if err = agent.Remove(key); err != nil {
 					a.log.Warnf("Unable to communicate with agent and remove key: %v", err)
 				}
 			}

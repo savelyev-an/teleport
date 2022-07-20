@@ -35,6 +35,7 @@ import (
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/api/utils/keypaths"
+	apisshutils "github.com/gravitational/teleport/api/utils/sshutils"
 	"github.com/gravitational/teleport/lib/auth"
 	"github.com/gravitational/teleport/lib/auth/testauthority"
 	"github.com/gravitational/teleport/lib/fixtures"
@@ -130,23 +131,24 @@ func TestAddKey(t *testing.T) {
 
 	// check that we've loaded a cert as well as a private key into the teleport agent
 	// and it's for the user we expected to add a certificate for
+	expectComment := apisshutils.TeleportAgentKeyComment(s.username, s.key.ClusterName)
 	require.Len(t, teleportAgentKeys, 2)
 	require.Equal(t, "ssh-rsa-cert-v01@openssh.com", teleportAgentKeys[0].Type())
-	require.Equal(t, "teleport:"+s.username, teleportAgentKeys[0].Comment)
+	require.Equal(t, expectComment, teleportAgentKeys[0].Comment)
 	require.Equal(t, "ssh-rsa", teleportAgentKeys[1].Type())
-	require.Equal(t, "teleport:"+s.username, teleportAgentKeys[1].Comment)
+	require.Equal(t, expectComment, teleportAgentKeys[1].Comment)
 
 	// check that we've loaded a cert as well as a private key into the system again
 	found := false
 	for _, sak := range systemAgentKeys {
-		if sak.Comment == "teleport:"+s.username && sak.Type() == "ssh-rsa" {
+		if sak.Comment == expectComment && sak.Type() == "ssh-rsa" {
 			found = true
 		}
 	}
 	require.True(t, found)
 	found = false
 	for _, sak := range systemAgentKeys {
-		if sak.Comment == "teleport:"+s.username && sak.Type() == "ssh-rsa-cert-v01@openssh.com" {
+		if sak.Comment == expectComment && sak.Type() == "ssh-rsa-cert-v01@openssh.com" {
 			found = true
 		}
 	}
