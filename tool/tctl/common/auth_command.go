@@ -19,6 +19,8 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"github.com/gravitational/teleport"
+	"io"
 	"net"
 	"net/url"
 	"os"
@@ -56,6 +58,7 @@ type AuthCommand struct {
 	genPrivPath                string
 	genUser                    string
 	genHost                    string
+	format                     string
 	genTTL                     time.Duration
 	exportAuthorityFingerprint string
 	exportPrivateKeys          bool
@@ -82,6 +85,8 @@ type AuthCommand struct {
 	authSign     *kingpin.CmdClause
 	authRotate   *kingpin.CmdClause
 	authLS       *kingpin.CmdClause
+
+	stdout io.Writer
 }
 
 // Initialize allows TokenCommand to plug itself into the CLI parser
@@ -136,6 +141,11 @@ func (a *AuthCommand) Initialize(app *kingpin.Application, config *service.Confi
 	a.authRotate.Flag("phase", fmt.Sprintf("Target rotation phase to set, used in manual rotation, one of: %v", strings.Join(types.RotatePhases, ", "))).StringVar(&a.rotateTargetPhase)
 
 	a.authLS = auth.Command("ls", "List connected auth servers")
+	a.authLS.Flag("format", "Output format: 'yaml', 'json' or 'text'").Default(teleport.YAML).StringVar(&a.format)
+
+	if a.stdout == nil {
+		a.stdout = os.Stdout
+	}
 }
 
 // TryRun takes the CLI command as an argument (like "auth gen") and executes it
@@ -415,11 +425,15 @@ func (a *AuthCommand) ListAuthServers(ctx context.Context, clusterAPI auth.Clien
 		return trace.Wrap(err)
 	}
 
-	for _, s := range servers {
-		fmt.Printf("%s\n", s.GetName())
-		fmt.Printf("%s\n", s.GetAddr())
-		fmt.Printf("%s\n", s.GetHostname())
-		fmt.Println()
+	sc := &serverCollection{servers, false}
+
+	switch a.format {
+	case teleport.Text:
+		return sc.writeText(a.stdout)
+	case teleport.YAML:
+		return writeYAML(sc, a.stdout)
+	case teleport.JSON:
+		return writeJSON(sc, a.stdout)
 	}
 
 	return nil
