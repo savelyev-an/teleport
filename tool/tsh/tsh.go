@@ -3787,7 +3787,7 @@ func serializeAppsWithClusters(apps []appListing, format string) (string, error)
 }
 
 func onSessions(cf *CLIConf) error {
-	fromUTC, toUTC, err := defaults.DefaultSearchSessionRange(cf.FromUTC, cf.ToUTC)
+	fromUTC, toUTC, err := defaults.SearchSessionRange(clockwork.NewRealClock(), cf.FromUTC, cf.ToUTC)
 	if err != nil {
 		return trace.Wrap(err)
 	}
