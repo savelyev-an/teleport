@@ -19,6 +19,7 @@ package alpnproxy
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -26,6 +27,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/gravitational/trace"
+	mplex "github.com/libp2p/go-mplex"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 
@@ -147,10 +149,11 @@ func (l *LocalProxy) GetAddr() string {
 // handleDownstreamConnection proxies the downstreamConn (connection established to the local proxy) and forward the
 // traffic to the upstreamConn (TLS connection to remote host).
 func (l *LocalProxy) handleDownstreamConnection(ctx context.Context, downstreamConn net.Conn, serverName string) error {
+	fmt.Println("-->> Handling downstream connection")
 	defer downstreamConn.Close()
 
-	upstreamConn, err := tls.Dial("tcp", l.cfg.RemoteProxyAddr, &tls.Config{
-		NextProtos:         l.cfg.GetProtocols(),
+	baseConn, err := tls.Dial("tcp", l.cfg.RemoteProxyAddr, &tls.Config{
+		NextProtos:         append([]string{string(common.ProtocolMultiplex)}, l.cfg.GetProtocols()...),
 		InsecureSkipVerify: l.cfg.InsecureSkipVerify,
 		ServerName:         serverName,
 		Certificates:       l.cfg.Certs,
@@ -158,7 +161,39 @@ func (l *LocalProxy) handleDownstreamConnection(ctx context.Context, downstreamC
 	if err != nil {
 		return trace.Wrap(err)
 	}
-	defer upstreamConn.Close()
+	defer baseConn.Close()
+
+	fmt.Println("-->> Starting multiplex")
+	m, err := mplex.NewMultiplex(baseConn, true, nil)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+
+	fmt.Println("-->> Starting creating stream")
+	stream, err := m.NewStream(ctx)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+
+	upstreamConn := newMultiplexConn(baseConn, stream)
+
+	// Ping handler.
+	go func() {
+		pingStream, err := m.NewStream(ctx)
+		if err != nil {
+			return
+		}
+
+		buf := make([]byte, 32)
+		for {
+			n, err := pingStream.Read(buf)
+			if err != nil {
+				fmt.Println("-->> error reading ping", err)
+				return
+			}
+			fmt.Println("-->> received ping", string(buf[:n]))
+		}
+	}()
 
 	errC := make(chan error, 2)
 	go func() {

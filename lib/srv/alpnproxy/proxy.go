@@ -21,6 +21,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/base64"
+	"fmt"
 	"io"
 	"net"
 	"strings"
@@ -37,6 +38,7 @@ import (
 	"github.com/gravitational/teleport/lib/utils"
 
 	"github.com/gravitational/trace"
+	mplex "github.com/libp2p/go-mplex"
 	"github.com/sirupsen/logrus"
 )
 
@@ -354,6 +356,8 @@ func (p *Proxy) handleConn(ctx context.Context, clientConn net.Conn) error {
 		return trace.Wrap(err)
 	}
 
+	fmt.Println("-->> Supported Protos", hello.SupportedProtos)
+
 	handlerDesc, err := p.getHandlerDescBaseOnClientHelloMsg(hello)
 	if err != nil {
 		return trace.Wrap(err)
@@ -379,14 +383,64 @@ func (p *Proxy) handleConn(ctx context.Context, clientConn net.Conn) error {
 		return trace.Wrap(err)
 	}
 
+	var handlerConn net.Conn = tlsConn
+	// Check if Multiplex is supported/required by the client.
+	if hello.SupportedProtos[0] == string(common.ProtocolMultiplex) {
+		// Handle connection multiplexing.
+		handlerConn, err = p.handleConnectionMultiplexing(ctx, tlsConn)
+		if err != nil {
+			return trace.Wrap(err)
+		}
+	}
+
 	isDatabaseConnection, err := dbutils.IsDatabaseConnection(tlsConn.ConnectionState())
 	if err != nil {
 		p.log.WithError(err).Debug("Failed to check if connection is database connection.")
 	}
 	if isDatabaseConnection {
-		return trace.Wrap(p.handleDatabaseConnection(ctx, tlsConn, connInfo))
+		return trace.Wrap(p.handleDatabaseConnection(ctx, handlerConn, connInfo))
 	}
-	return trace.Wrap(handlerDesc.handle(ctx, tlsConn, connInfo))
+	return trace.Wrap(handlerDesc.handle(ctx, handlerConn, connInfo))
+}
+
+// handleConnectionMultiplexing
+func (p *Proxy) handleConnectionMultiplexing(ctx context.Context, conn net.Conn) (net.Conn, error) {
+	fmt.Println("-->> Starting multiplex connection")
+	m, err := mplex.NewMultiplex(conn, true, nil)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	stream, err := m.Accept()
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	// Next stream is going to handle ping.
+	go func() {
+		stream, err := m.Accept()
+		if err != nil {
+			return
+		}
+
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				fmt.Println("-->> ping done")
+				return
+			case <-ticker.C:
+				_, err := stream.Write([]byte("ping"))
+				if err != nil {
+					fmt.Println("-->> error writing ping", err)
+					return
+				}
+			}
+		}
+	}()
+
+	return newMultiplexConn(conn, stream), nil
 }
 
 // getTLSConfig returns HandlerDesc.TLSConfig if custom TLS configuration was set for the handler
