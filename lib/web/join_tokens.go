@@ -265,7 +265,7 @@ func getJoinScript(ctx context.Context, settings scriptSettings, m nodeAPIGetter
 
 	// We must also validate the label spec, which can be controlled by
 	// an attacker and is fed into the join script.
-	if strings.ContainsAny(settings.nodeLabels, "\r\n'#$") {
+	if strings.ContainsAny(settings.nodeLabels, "\r\n'#$`\\") {
 		return "", trace.BadParameter("invalid node-labels")
 	}
 	labels, err := client.ParseLabelSpec(settings.nodeLabels)
