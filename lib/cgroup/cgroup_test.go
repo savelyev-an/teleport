@@ -38,6 +38,8 @@ func TestMain(m *testing.M) {
 // TestCreate tests creating and removing cgroups as well as shutting down
 // the service and unmounting the cgroup hierarchy.
 func TestCreate(t *testing.T) {
+	t.Parallel()
+
 	// This test must be run as root. Only root can create cgroups.
 	if !isRoot() {
 		t.Skip("Tests for package cgroup can only be run as root.")
@@ -66,19 +68,21 @@ func TestCreate(t *testing.T) {
 	require.NoError(t, err)
 
 	// Make sure cgroup is gone.
-	require.DirNotExists(t, cgroupPath)
+	require.NoDirExists(t, cgroupPath)
 
 	// Close the cgroup service, this should unmound the cgroup filesystem.
 	err = service.Close()
 	require.NoError(t, err)
 
 	// Make sure the cgroup filesystem has been unmounted.
-	require.DirNotExists(t, cgroupPath)
+	require.NoDirExists(t, service.teleportRoot)
 }
 
 // TestCleanup tests the ability for Teleport to remove and cleanup all
 // cgroups which is performed upon startup.
 func TestCleanup(t *testing.T) {
+	t.Parallel()
+
 	// This test must be run as root. Only root can create cgroups.
 	if !isRoot() {
 		t.Skip("Tests for package cgroup can only be run as root.")
@@ -105,7 +109,7 @@ func TestCleanup(t *testing.T) {
 
 	// Make sure the cgroup no longer exists.
 	cgroupPath := path.Join(service.teleportRoot, sessionID)
-	require.DirNotExists(t, cgroupPath)
+	require.NoDirExists(t, cgroupPath)
 }
 
 // isRoot returns a boolean if the test is being run as root or not. Tests
