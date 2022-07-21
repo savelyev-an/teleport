@@ -251,7 +251,7 @@ func (a *LocalKeyAgent) UnloadKey(key KeyIndex) error {
 
 		// remove any teleport keys we currently have loaded in the agent for this user and cluster
 		for _, agentKey := range keyList {
-			if agentKey.Comment == sshutils.TeleportAgentKeyComment(key.Username, key.ClusterName) {
+			if agentKey.Comment == sshutils.TeleportAgentKeyComment(key.ClusterName, key.Username) {
 				err = agent.Remove(agentKey)
 				if err != nil {
 					a.log.Warnf("Unable to communicate with agent and remove key: %v", err)

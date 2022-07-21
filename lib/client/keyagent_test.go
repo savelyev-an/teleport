@@ -126,7 +126,7 @@ func TestAddKey(t *testing.T) {
 
 	// check that we've loaded a cert as well as a private key into the teleport agent
 	// and it's for the user we expected to add a certificate for
-	expectComment := apisshutils.TeleportAgentKeyComment(s.username, s.clusterName)
+	expectComment := apisshutils.TeleportAgentKeyComment(s.clusterName, s.username)
 	require.Len(t, teleportAgentKeys, 2)
 	require.Equal(t, "ssh-rsa-cert-v01@openssh.com", teleportAgentKeys[0].Type())
 	require.Equal(t, expectComment, teleportAgentKeys[0].Comment)
@@ -213,13 +213,13 @@ func TestLoadKey(t *testing.T) {
 			// we added the correct amount to each agent.
 			var agentKeysForKey []*agent.Key
 			for _, agentKey := range teleportAgentKeys {
-				if agentKey.Comment == apisshutils.TeleportAgentKeyComment(key.Username, key.ClusterName) {
+				if agentKey.Comment == apisshutils.TeleportAgentKeyComment(key.ClusterName, key.Username) {
 					agentKeysForKey = append(agentKeysForKey, agentKey)
 				}
 			}
 			require.Len(t, agentKeysForKey, agentsPerKey)
 			for _, agentKey := range systemAgentKeys {
-				if agentKey.Comment == apisshutils.TeleportAgentKeyComment(key.Username, key.ClusterName) {
+				if agentKey.Comment == apisshutils.TeleportAgentKeyComment(key.ClusterName, key.Username) {
 					agentKeysForKey = append(agentKeysForKey, agentKey)
 				}
 			}

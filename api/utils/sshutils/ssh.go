@@ -165,8 +165,8 @@ const (
 	agentCommentSeparator = ":"
 )
 
-func TeleportAgentKeyComment(userName, clusterName string) string {
-	return strings.Join([]string{agentCommentPrefix, userName, clusterName}, agentCommentSeparator)
+func TeleportAgentKeyComment(clusterName, userName string) string {
+	return strings.Join([]string{agentCommentPrefix, clusterName, userName}, agentCommentSeparator)
 }
 
 func IsTeleportAgentKey(key *agent.Key) bool {
@@ -184,7 +184,7 @@ func AsAgentKeys(sshCert *ssh.Certificate, privKey []byte) ([]agent.AddedKey, er
 
 	// put a teleport identifier along with the teleport user into the comment field
 	clusterName := sshCert.Permissions.Extensions[constants.CertExtensionTeleportRouteToCluster]
-	comment := TeleportAgentKeyComment(sshCert.KeyId, clusterName)
+	comment := TeleportAgentKeyComment(clusterName, sshCert.KeyId)
 
 	// On Windows, return the certificate with the private key embedded.
 	if runtime.GOOS == constants.WindowsOS {
