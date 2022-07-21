@@ -424,7 +424,7 @@ func (c *Cache) read() (readGuard, error) {
 		return readGuard{}, trace.Errorf("cache is closed")
 	}
 	c.rw.RLock()
-	if c.ok {
+	if c.ok && !c.Disabled.Load() {
 		return readGuard{
 			trust:            c.trustCache,
 			clusterConfig:    c.clusterConfigCache,
@@ -581,6 +581,8 @@ type Config struct {
 	neverOK bool
 	// Tracer is used to create spans
 	Tracer oteltrace.Tracer
+
+	Disabled atomic.Bool
 }
 
 // CheckAndSetDefaults checks parameters and sets default values

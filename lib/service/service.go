@@ -1522,6 +1522,7 @@ func (process *TeleportProcess) initAuthService() error {
 		if err != nil {
 			return trace.Wrap(err)
 		}
+		cache.Disabled.Store(true)
 		as.Cache = cache
 
 		return nil
@@ -1590,6 +1591,10 @@ func (process *TeleportProcess) initAuthService() error {
 		PluginRegistry: process.PluginRegistry,
 		Emitter:        checkingEmitter,
 		MetadataGetter: uploadHandler,
+	}
+
+	if cache, ok := authServer.Cache.(*cache.Cache); ok {
+		cache.Disabled.Store(false)
 	}
 
 	// Register TLS endpoint of the auth service
