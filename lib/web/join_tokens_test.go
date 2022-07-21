@@ -340,7 +340,19 @@ func TestGetNodeJoinScript(t *testing.T) {
 				require.Contains(t, script, "test-host")
 				require.Contains(t, script, "12345678")
 				require.Contains(t, script, "sha256:")
-				require.NotContains(t, script, "JOIN_METHOD=\"iam\"")
+				require.NotContains(t, script, "JOIN_METHOD='iam'")
+			},
+		},
+		{
+			desc:      "valid with labels",
+			settings:  scriptSettings{token: validToken, nodeLabels: "foo=bar"},
+			errAssert: require.NoError,
+			extraAssertions: func(script string) {
+				require.Contains(t, script, validToken)
+				require.Contains(t, script, "test-host")
+				require.Contains(t, script, "12345678")
+				require.Contains(t, script, "sha256:")
+				require.NotContains(t, script, "JOIN_METHOD='iam'")
 			},
 		},
 		{
@@ -367,8 +379,32 @@ func TestGetNodeJoinScript(t *testing.T) {
 			},
 			errAssert: require.NoError,
 			extraAssertions: func(script string) {
-				require.Contains(t, script, "JOIN_METHOD=\"iam\"")
+				require.Contains(t, script, "JOIN_METHOD='iam'")
 			},
+		},
+		{
+			desc: "invalid label key",
+			settings: scriptSettings{
+				token:      validToken,
+				nodeLabels: "ab😅=123",
+			},
+			errAssert: require.Error,
+		},
+		{
+			desc: "label value with newline",
+			settings: scriptSettings{
+				token:      validToken,
+				nodeLabels: "foo=ba\nr",
+			},
+			errAssert: require.Error,
+		},
+		{
+			desc: "invalid label value",
+			settings: scriptSettings{
+				token:      validToken,
+				nodeLabels: "foo=bar'\necho hello # ",
+			},
+			errAssert: require.Error,
 		},
 	} {
 		t.Run(test.desc, func(t *testing.T) {

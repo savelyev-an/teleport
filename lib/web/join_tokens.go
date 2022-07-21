@@ -265,11 +265,17 @@ func getJoinScript(ctx context.Context, settings scriptSettings, m nodeAPIGetter
 
 	// We must also validate the label spec, which can be controlled by
 	// an attacker and is fed into the join script.
-	if _, err := client.ParseLabelSpec(settings.nodeLabels); err != nil {
+	labels, err := client.ParseLabelSpec(settings.nodeLabels)
+	if err != nil {
 		return "", trace.BadParameter("invalid node-labels")
 	}
-	if strings.ContainsAny(settings.nodeLabels, "\r\n") {
-		return "", trace.BadParameter("invalid node-labels")
+	for k, v := range labels {
+		if !types.IsValidLabelKey(k) {
+			return "", trace.BadParameter("invalid label key %q", k)
+		}
+		if strings.ContainsAny(v, "\r\n'#") {
+			return "", trace.BadParameter("invalid label %v=%v", k, v)
+		}
 	}
 
 	// Get hostname and port from proxy server address.
