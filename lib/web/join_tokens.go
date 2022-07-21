@@ -242,7 +242,7 @@ func createJoinToken(ctx context.Context, m nodeAPIGetter, roles types.SystemRol
 
 func getJoinScript(ctx context.Context, settings scriptSettings, m nodeAPIGetter) (string, error) {
 	switch settings.joinMethod {
-	case string(types.JoinMethodUnspecified), string(types.JoinMethodToken), string(types.JoinMethodEC2), string(types.JoinMethodIAM):
+	case string(types.JoinMethodUnspecified), string(types.JoinMethodToken), string(types.JoinMethodIAM):
 		if settings.joinMethod != string(types.JoinMethodIAM) {
 			decodedToken, err := hex.DecodeString(settings.token)
 			if err != nil {
@@ -260,7 +260,7 @@ func getJoinScript(ctx context.Context, settings scriptSettings, m nodeAPIGetter
 			return "", trace.BadParameter("invalid token")
 		}
 	default:
-		return "", trace.BadParameter("invalid join method %q", settings.joinMethod)
+		return "", trace.BadParameter("join method %q is not supported via script", settings.joinMethod)
 	}
 
 	// We must also validate the label spec, which can be controlled by
