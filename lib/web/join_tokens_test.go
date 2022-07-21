@@ -372,7 +372,7 @@ func TestGetNodeJoinScript(t *testing.T) {
 		},
 	} {
 		t.Run(test.desc, func(t *testing.T) {
-			script, err := getJoinScript(test.settings, m)
+			script, err := getJoinScript(context.Background(), test.settings, m)
 			test.errAssert(t, err)
 			if err != nil {
 				require.Empty(t, script)
@@ -393,7 +393,7 @@ func TestGetAppJoinScript(t *testing.T) {
 
 		return []types.Server{&s}, nil
 	}
-	m.mockGetClusterCACert = func(ctx context.Context) (*proto.GetClusterCACertResponse, error) {
+	m.mockGetClusterCACert = func(context.Context) (*proto.GetClusterCACertResponse, error) {
 		fakeBytes := []byte(fixtures.SigningCertPEM)
 		return &proto.GetClusterCACertResponse{TLSCA: fakeBytes}, nil
 	}
@@ -414,11 +414,11 @@ func TestGetAppJoinScript(t *testing.T) {
 	}
 
 	// Test invalid app data.
-	script, err := getJoinScript(badAppName, m)
+	script, err := getJoinScript(context.Background(), badAppName, m)
 	require.Empty(t, script)
 	require.True(t, trace.IsBadParameter(err))
 
-	script, err = getJoinScript(badAppURI, m)
+	script, err = getJoinScript(context.Background(), badAppURI, m)
 	require.Empty(t, script)
 	require.True(t, trace.IsBadParameter(err))
 
@@ -547,7 +547,7 @@ func TestGetAppJoinScript(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
-			script, err = getJoinScript(tc.settings, m)
+			script, err = getJoinScript(context.Background(), tc.settings, m)
 			if tc.shouldError {
 				require.NotNil(t, err)
 				require.Equal(t, script, "")

@@ -166,7 +166,7 @@ func (h *Handler) getNodeJoinScriptHandle(w http.ResponseWriter, r *http.Request
 		nodeLabels:     nodeLabels,
 	}
 
-	script, err := getJoinScript(settings, h.GetProxyClient())
+	script, err := getJoinScript(r.Context(), settings, h.GetProxyClient())
 	if err != nil {
 		log.WithError(err).Info("Failed to return the node install script.")
 		w.Write(scripts.ErrorBashScript)
@@ -207,7 +207,7 @@ func (h *Handler) getAppJoinScriptHandle(w http.ResponseWriter, r *http.Request,
 		appURI:         uri,
 	}
 
-	script, err := getJoinScript(settings, h.GetProxyClient())
+	script, err := getJoinScript(r.Context(), settings, h.GetProxyClient())
 	if err != nil {
 		log.WithError(err).Info("Failed to return the app install script.")
 		w.Write(scripts.ErrorBashScript)
@@ -240,7 +240,7 @@ func createJoinToken(ctx context.Context, m nodeAPIGetter, roles types.SystemRol
 	}, nil
 }
 
-func getJoinScript(settings scriptSettings, m nodeAPIGetter) (string, error) {
+func getJoinScript(ctx context.Context, settings scriptSettings, m nodeAPIGetter) (string, error) {
 	switch settings.joinMethod {
 	case string(types.JoinMethodUnspecified), string(types.JoinMethodToken), string(types.JoinMethodEC2), string(types.JoinMethodIAM):
 		if settings.joinMethod != string(types.JoinMethodIAM) {
@@ -255,7 +255,7 @@ func getJoinScript(settings scriptSettings, m nodeAPIGetter) (string, error) {
 
 		// The provided token can be attacker controlled, so we must validate
 		// it with the backend before using it to generate the script.
-		_, err := m.GetToken(context.Background(), settings.token)
+		_, err := m.GetToken(ctx, settings.token)
 		if err != nil {
 			return "", trace.BadParameter("invalid token")
 		}
