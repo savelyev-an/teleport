@@ -229,6 +229,15 @@ spec:
   {{- toYaml .Values.operator.resources | nindent 10 }}
 {{- end }}
         volumeMounts:
+  {{- if .Values.highAvailability.certManager.enabled }}
+        - mountPath: /etc/teleport-tls
+          name: "teleport-tls"
+          readOnly: true
+  {{- else if .Values.tls.existingSecretName }}
+        - mountPath: /etc/teleport-tls
+          name: "teleport-tls"
+          readOnly: true
+  {{- end }}
         - mountPath: /etc/teleport
           name: "config"
           readOnly: true
