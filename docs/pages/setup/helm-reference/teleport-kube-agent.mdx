@@ -363,14 +363,14 @@ See [this link for information on Community Docker image versions](../../setup/g
 | - | - |
 | `list` | `[]` |
 
-When `caPin` is set, the teleport agent will use its values to check the
-Auth server identity during the initial join. This enables a more secure
-way of adding new nodes to a cluster. See
+When `caPin` is set, the Teleport pod will use its values to check the
+Auth Service's identity when first joining a cluster. This enables a more secure
+way of adding new Teleport instances to a cluster. See
 ["Adding Nodes to the Cluster"](../admin/adding-nodes.mdx).
 
 Each list element can be the pin itself (recommended, works out of the box),
 or a path to a file containing the pin. For the latter it is your
-responsibility to mount the file, using [extraVolumes](#extraVolumes).
+responsibility to mount the file using [`extraVolumes`](#extraVolumes).
 
 <Tabs>
   <TabItem label="values.yaml">
