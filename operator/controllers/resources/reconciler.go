@@ -81,8 +81,6 @@ func (r ResourceBaseReconciler) Do(ctx context.Context, req ctrl.Request, obj kc
 	hasDeletionFinalizer := controllerutil.ContainsFinalizer(obj, DeletionFinalizer)
 	isMarkedToBeDeleted := !obj.GetDeletionTimestamp().IsZero()
 
-	name := obj.GetName()
-	kind := obj.GetObjectKind()
 	// Delete
 	if isMarkedToBeDeleted {
 		if hasDeletionFinalizer {
