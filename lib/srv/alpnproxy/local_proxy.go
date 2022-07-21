@@ -24,6 +24,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/gravitational/trace"
@@ -229,45 +231,60 @@ func (l *LocalProxy) handleDownstreamConnection2(ctx context.Context, downstream
 	if err != nil {
 		return trace.Wrap(err)
 	}
+	log.Infof("-->> %v multiplexConn started", time.Now())
 
-	// ----- Handle ping
 	pingStream, err := multiplexConn.NewStream(ctx)
 	if err != nil {
 		return trace.Wrap(err)
 	}
-	defer pingStream.Close()
-	go func() {
-		// TODO client should send ping and verify pong.
-		for {
-			buf := make([]byte, 32)
-			n, err := pingStream.Read(buf)
-			if err != nil {
-				log.Infof("-->> error reading ping", err)
-				return
-			}
-			log.Infof("-->> received ping", string(buf[:n]))
-		}
-	}()
-
-	// ----- Handle database
-	databaseStream, err := multiplexConn.NewStream(ctx)
+	dataStream, err := multiplexConn.NewStream(ctx)
 	if err != nil {
 		return trace.Wrap(err)
 	}
+	dataStream.SetDeadline(time.Time{})
 
-	upstreamDatabaseConn := newMultiplexConn(upstreamConn, databaseStream)
+	// ----- Handle database
+	dataStreamConn := newMultiplexConn(upstreamConn, dataStream)
+
 	errC := make(chan error, 2)
 	go func() {
 		defer downstreamConn.Close()
-		defer upstreamDatabaseConn.Close()
-		_, err := io.Copy(downstreamConn, upstreamDatabaseConn)
+		defer dataStreamConn.Close()
+		_, err := io.Copy(downstreamConn, dataStreamConn)
 		errC <- err
 	}()
 	go func() {
 		defer downstreamConn.Close()
-		defer upstreamDatabaseConn.Close()
-		_, err := io.Copy(upstreamDatabaseConn, downstreamConn)
+		defer dataStreamConn.Close()
+		_, err := io.Copy(dataStreamConn, downstreamConn)
 		errC <- err
+	}()
+
+	// ----- Handle ping
+	defer pingStream.Close()
+	go func() {
+		for {
+			select {
+			case <-time.After(time.Second * 10):
+				_, err := pingStream.Write([]byte(strings.Repeat("p", 200)))
+				if err != nil {
+					log.Infof("-->> %v error sending ping %v", time.Now(), err)
+					return
+				}
+
+				buf := make([]byte, 256)
+				n, err := pingStream.Read(buf)
+				if err != nil {
+					log.Infof("-->> %v error reading pong %v", time.Now(), err)
+					return
+				}
+				log.Infof("-->> %v received pong %v", time.Now(), string(buf[:n]))
+
+			case <-ctx.Done():
+				log.Infof("-->> %v ping stream closed", time.Now())
+				break
+			}
+		}
 	}()
 
 	var errs []error

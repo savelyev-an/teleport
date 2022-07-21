@@ -42,6 +42,7 @@ import (
 
 	"github.com/gravitational/trace"
 	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // ProxyConfig  is the configuration for an ALPN proxy server.
@@ -564,34 +565,36 @@ func (p *Proxy) handleConnectionMultiplexing(ctx context.Context, conn net.Conn)
 		return nil, trace.Wrap(err)
 	}
 
-	stream, err := m.Accept()
+	// First stream is going to handle ping.
+	pingStream, err := m.Accept()
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
 
-	// Next stream is going to handle ping.
-	go func() {
-		stream, err := m.Accept()
-		if err != nil {
-			return
-		}
+	// Second stream is the real stream.
+	dataStream, err := m.Accept()
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	dataStream.SetDeadline(time.Time{})
 
-		ticker := time.NewTicker(time.Second * 10)
-		defer ticker.Stop()
+	go func() {
 		for {
-			select {
-			case <-ctx.Done():
-				fmt.Println("-->> ping done")
+			buf := make([]byte, 256)
+			n, err := pingStream.Read(buf)
+			if err != nil {
+				log.Infof("-->> %v error reading ping %v", time.Now(), err)
 				return
-			case <-ticker.C:
-				_, err := stream.Write([]byte("ping"))
-				if err != nil {
-					fmt.Println("-->> error writing ping", err)
-					return
-				}
+			}
+			log.Infof("-->> %v received ping %v", time.Now(), string(buf[:n]))
+
+			_, err = pingStream.Write([]byte("pong"))
+			if err != nil {
+				log.Infof("-->> %v error sending pong %v", time.Now(), err)
+				return
 			}
 		}
 	}()
 
-	return newMultiplexConn(conn, stream), nil
+	return newMultiplexConn(conn, dataStream), nil
 }
