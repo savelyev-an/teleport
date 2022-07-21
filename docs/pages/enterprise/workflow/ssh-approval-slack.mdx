@@ -30,26 +30,94 @@ Here is an example of sending an access request via Teleport's Slack plugin:
 (!/docs/pages/includes/commercial-prereqs-tabs.mdx!)
 
 - Slack admin privileges to create an app and install it to your workspace. Your
-    Slack profile must have the "Workspace Owner" or "Workspace Admin" banner
-    below your profile picture.
+  Slack profile must have the "Workspace Owner" or "Workspace Admin" banner
+  below your profile picture.
 
 (!/docs/pages/includes/tctl.mdx!)
 
 ## Step 1/8. Define RBAC resources
 
-First, ennable access requests in your Teleport cluster. For the purpose of this
-guide, we will define a role that can request the built-in `editor` role and a
-role that can review requests for the `editor` role. We will also define one
-user for each of these roles.  
+Before you set up the Slack plugin, you will need to enable access requests in
+your Teleport cluster. For the purpose of this guide, we will define an
+`editor-requester` role, which can request the built-in `editor` privileges, and
+an `editor-reviewer` role that can review requests for the `editor` role. 
 
-Create a file called `access-request-rbac.yaml` with the following content:
-
-{/* TODO: Fill this in */}
+Create a file called `editor-request-rbac.yaml` with the following content:
 
 ```yaml
-
-
+kind: role
+version: v5
+metadata:
+  name: editor-reviewer
+spec:
+  allow:
+    review_requests:
+      roles: ['editor']
+---
+kind: role
+version: v5
+metadata:
+  name: editor-requester
+spec:
+  allow:
+    request:
+      roles: ['editor']
+      thresholds:
+        - approve: 1
+          deny: 1
 ```
+
+Create the roles  you defined:
+
+```code
+$ tctl create -f editor-request-rbac.yaml
+role 'editor-reviewer' has been created
+role 'editor-requester' has been created
+```
+
+Allow yourself to review requests by users with the `editor-requester` role by
+assigning yourself the `editor-reviewer` role. First, retrieve your user
+definition:
+
+```code
+$ TELEPORT_USER=<your username>
+$ tctl get user/${TELEPORT_USER?} > user.yaml
+```
+
+Edit `user.yaml` to add the `editor-reviewer` role:
+
+```diff
+ spec:
+   roles:
+   - access
+   - editor
++  - editor-reviewer
+```
+
+Update your user definition:
+
+```code
+$ tctl create -f user.yaml
+```
+
+Log out of Teleport and log in again. You will now have the ability to review
+requests for the `editor` role.
+
+Create a user called `myuser` who has the `editor-requester` role as well as the
+built-in `access` role and the `ubuntu` login. This user can only access cluster
+resources, and cannot edit your cluster configuration unless they request the
+`editor` role:
+
+```code
+$ tctl users add myuser --roles=access,editor-requester --logins=ubuntu
+```
+
+`tctl` will print an invitation URL to your terminal. Visit the URL and log in
+as `myuser` for the first time, registering credentials as configured for your
+Teleport cluster.
+
+Later in this guide, you will have `myuser` request the `editor` role so you can
+review the request using the Teleport plugin.
 
 ## Step 2/8. Install the Teleport Slack plugin
 
@@ -118,13 +186,14 @@ $ sudo mv auth.* /var/lib/teleport/plugins/slack
 
 The access request plugin for Slack receives access request events from the
 Teleport Auth Service, formats them into Slack messages, and sends them to the
-Slack API. For this to work, you must register a new app with the Slack API.
+Slack API to post them in your workspace. For this to work, you must register a
+new app with the Slack API.
 
 ### Create your app
 
 Visit [https://api.slack.com/apps](https://api.slack.com/apps) to create a new
 Slack app. Click "Create an App", then "From scratch". Fill in the form as shown
-below. 
+below:
 
 ![Create Slack App](../../../img/enterprise/plugins/slack/Create-a-Slack-App.png)
 
@@ -138,10 +207,9 @@ Next, configure your application to authenticate to the Slack API. We will do
 this by generating an OAuth token that the plugin will present to the Slack API.
 
 We will restrict the plugin to the norrowest possible permissions by using OAuth
-scopes. The Slack plugin needs to post messages to your workspace as the
-"Teleport" user. It also needs to read usernames and email addresses in order to
-direct access request notifications from the Auth Service to the appropriate
-Teleport users in Slack.
+scopes. The Slack plugin needs to post messages to your workspace. It also needs
+to read usernames and email addresses in order to direct access request
+notifications from the Auth Service to the appropriate Teleport users in Slack.
 
 After creating your app, the Slack website will open a console where you can
 specify configuration options. On the sidebar menu under "Features", click
@@ -161,16 +229,16 @@ The result should look like this:
 
 After you have configured scopes for your plugin, scroll back to the top of the
 OAuth & Permissions page, find the "OAuth Tokens for Your Workspace" section,
-and click "Install to Workspace". You will see a summary of the permission we
+and click "Install to Workspace". You will see a summary of the permission you
 configured for the Slack plugin earlier.
 
 In "Where should Teleport post?", choose "Slackbot" as the default channel the
-plugin will post to. This is a provisional value: later in this guide, we will
-configure the plugin to post in the channels that work best for your
-organization. 
+plugin will post to. The plugin will post here when sending direct messages.
+Later in this guide, we will configure the plugin to post in other channels as
+well.
 
-After submitting this form, you will see an OAuth token in the "OAuth Tokens for
-Your Workspace" section of "OAuth & Permissions":
+After submitting this form, you will see an OAuth token in the "OAuth &
+Permissions" tab under "Tokens for Your Workspace": 
 
 ![OAuth Tokens](../../../img/enterprise/plugins/slack/OAuth.png)
 
@@ -181,16 +249,17 @@ You will use this token later when configuring the Slack plugin.
 At this point, you have generated the credentials your Teleport Slack plugin
 needs to communicate with your Teleport cluster and the Slack API. In this step,
 you will configure the Slack plugin to use these credentials. You will also
-configure the plugin to send access request updates to the most appropriate
-channels for your organization.
+configure the plugin to notify the right Slack channels when it receives an
+access request update.
 
 ### Generate a config file
 
 The Teleport Slack plugin uses a config file in TOML format. Generate a
-boilerplate config by running the following command: 
+boilerplate config by running the following command (the plugin expects the file
+to be in `/etc/teleport-slack.toml`):
 
 ```code
-$ teleport-slack configure > teleport-slack.toml
+$ teleport-slack configure > /etc/teleport-slack.toml
 ```
 
 This should result in a config file like the one below:
@@ -201,8 +270,8 @@ This should result in a config file like the one below:
 
 ### Edit the config file
 
-Edit the following fields in the configuration file you generated with values
-specific to your Teleport cluster and the Slack app you created earlier:
+Edit the `teleport-slack.toml` file you crated earlier to update the following
+fields:
 
 **`[teleport]`**
 
@@ -247,9 +316,10 @@ copy the "Bot User OAuth Token", and paste it into this field.
 
 **`[role_to_recipients]`**
 
-The `role_to_recipients` map configure the channels that the Slack plugin
-will notify when a user requests access to a specific role. When the Slack plugin
-receives an access request notification from the Auth Service, it will look up the role being requested from the map and identify the Slack channels to notify.
+The `role_to_recipients` map configure the channels that the Slack plugin will
+notify when a user requests access to a specific role. When the Slack plugin
+receives an access request from the Auth Service, it will look up the role being
+requested and identify the Slack channels to notify.
 
 Here is an example of a `role_to_recipients` map:
 
@@ -268,15 +338,11 @@ of a Slack user. If the recipient is an email address, the Slack plugin will
 use that email address to look up a direct message channel.
 
 The `role_to_recipients` map must also include an entry for `"*"`, which the
-plugin looks up if no other entry matches a given role name.
+plugin looks up if no other entry matches a given role name. In the example
+above, requests for roles aside from `dev` and `dba` will notify the
+`admin-slack-channel` channel.
 
-In the example above, if a user requests the `dev` role, the plugin will send a
-message to both `dev-slack-channel` and `admin-slack-channel`. If a user
-requests the `dba` role, the Slack user with the username `alex@gmail.com`, if
-one exists, will recieve a DM. If any other role is requested, the plugin will
-look up the `*` entry and send a message to the `admin-slack-channel`.
-
-<Admonition title="Suggested reviewers">
+<Details title="Suggested reviewers">
 
 Users can suggest reviewers when they create an access request, e.g.,:
 
@@ -289,7 +355,21 @@ these to the list of channels to notify. If a suggested reviewer is an email
 address, the plugin will look up the the direct message channel for that
 address and post a message in that channel.
 
-</Admonition>
+</Details>
+
+Configure the Slack plugin to notify you when a user requests the `editor` role
+by adding the following to your `role_to_recipients` config (replace
+`TELEPORT_USERNAME` with the user you assigned the `editor-reviewer` role
+earlier):
+
+```toml
+[role_to_recipients]
+"*" = "access-requests"
+"editor" = "TELEPORT_USERNAME"
+```
+
+Either create an `access-requests` channel in your Slack workspace or rename the
+value of the `"*"` key to an existing channel.
 
 ### Invite your Slack app
 
@@ -299,13 +379,15 @@ those channels.
 
 You have already configured the plugin to send direct messages as Slackbot. For
 any other channel you mention in your `role_to_recipients` map, you will need
-to invite the plugin to that channel. Navigate to the channel and enter `/invite
+to invite the plugin to that channel. Navigate to each channel and enter `/invite
 @teleport` in the message box. 
 
 ## Step 7/8. Test your Slack app
 
-Assuming that Teleport is running, you've created the Slack app, and the plugin is
-configured, you can now run the plugin and test the workflow!
+Once Teleport is running, you've created the Slack app, and the plugin is
+configured, you can now run the plugin and test the workflow.
+
+Start the plugin:
 
 ```code
 $ teleport-slack start

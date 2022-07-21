@@ -1,7 +1,7 @@
-Teleport's access plugins authenticate to your Teleport cluster as a
-non-interactive user with a Teleport role that has permissions to list, read,
-and update access requests. This way, plugins can retrieve access requests from
-the Teleport Auth Service, present them to reviewers, and modify them after a
+Teleport's access request plugins must authenticate to your Teleport cluster as
+a user with a Teleport role that has permissions to list, read, and update
+access requests. This way, plugins can retrieve access requests from the
+Teleport Auth Service, present them to reviewers, and modify them after a
 review.
 
 Define a non-interactive user and role called `access-plugin` by adding the
