@@ -546,7 +546,7 @@ func (a *LocalKeyAgent) DeleteKey() error {
 
 	// remove any keys that are loaded for this user from the teleport and
 	// system agents
-	err = a.UnloadKey(KeyIndex{ProxyHost: a.proxyHost, Username: a.username})
+	err = a.UnloadKey(KeyIndex{Username: a.username, ClusterName: a.siteName})
 	if err != nil {
 		return trace.Wrap(err)
 	}
