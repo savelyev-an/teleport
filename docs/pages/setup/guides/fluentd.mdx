@@ -282,26 +282,6 @@ Earlier, we generated a file called `teleport-event-handler.toml` to configure
 the Fluentd event handler. This file includes setting similar to the following:
 
 <Tabs>
-<TabItem scope={["cloud"]} label="Teleport Cloud">
-
-```toml
-storage = "./storage"
-timeout = "10s"
-batch = 20
-namespace = "default"
-
-[forward.fluentd]
-ca = "/home/sasha/scripts/event-handler/ca.crt"
-cert = "/home/sasha/scripts/event-handler/client.crt"
-key = "/home/sasha/scripts/event-handler/client.key"
-url = "https://localhost:8888/test.log"
-
-[teleport]
-addr = "example.teleport.com:443"
-identity = "identity"
-```
-
-</TabItem>
 <TabItem scope={["oss", "enterprise"]} label="Self-Hosted">
 
 ```toml
@@ -321,6 +301,26 @@ addr = "example.teleport.com:443"
 client_key = "auth.key"
 client_crt = "auth.crt"
 root_cas = "auth.cas"
+```
+
+</TabItem>
+<TabItem scope={["cloud"]} label="Teleport Cloud">
+
+```toml
+storage = "./storage"
+timeout = "10s"
+batch = 20
+namespace = "default"
+
+[forward.fluentd]
+ca = "/home/sasha/scripts/event-handler/ca.crt"
+cert = "/home/sasha/scripts/event-handler/client.crt"
+key = "/home/sasha/scripts/event-handler/client.key"
+url = "https://localhost:8888/test.log"
+
+[teleport]
+addr = "example.teleport.com:443"
+identity = "identity"
 ```
 
 </TabItem>
