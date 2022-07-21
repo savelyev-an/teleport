@@ -3012,6 +3012,10 @@ func makeProxySSHClientWithTLSWrapper(ctx context.Context, tc *TeleportClient, s
 
 	if env := os.Getenv("ALB_TEST"); env != "" {
 		tlsConfig.NextProtos = []string{"teleport-proxy-ssh-http"}
+		tlsConfig.RootCAs, err = tc.LocalAgent().ClientCertPool(tc.SiteName)
+		if err != nil {
+			return nil, trace.Wrap(err)
+		}
 	}
 
 	dialer := proxy.DialerFromEnvironment(tc.Config.WebProxyAddr, proxy.WithALPNDialer(tlsConfig))

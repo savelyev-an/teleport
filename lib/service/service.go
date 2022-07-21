@@ -3333,6 +3333,7 @@ func (process *TeleportProcess) initProxyEndpoint(conn *Connector) error {
 				return nil
 			},
 			MatchFunc: alpnproxy.MatchByProtocol("teleport-reversetunnel-http"),
+			TLSConfig: serverTLSConfig,
 		})
 
 		process.RegisterCriticalFunc("proxy.reversetunnel.server", func() error {

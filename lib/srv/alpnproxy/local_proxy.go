@@ -210,7 +210,7 @@ func (l *LocalProxy) handleDownstreamConnection2(ctx context.Context, downstream
 	}
 
 	upstreamConn := tls.Client(httpConn, &tls.Config{
-		NextProtos:         l.cfg.GetProtocols(),
+		NextProtos:         append(l.cfg.GetProtocols(), string(common.ProtocolHTTPTunnel)),
 		InsecureSkipVerify: l.cfg.InsecureSkipVerify,
 		ServerName:         serverName,
 		Certificates:       l.cfg.Certs,

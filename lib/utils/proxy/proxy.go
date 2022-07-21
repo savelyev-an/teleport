@@ -130,6 +130,7 @@ func (d directDial) getTLSConfig(addr *utils.NetAddr) (*tls.Config, error) {
 	tlsConfig := d.tlsConfig.Clone()
 	tlsConfig.ServerName = addr.Host()
 	tlsConfig.InsecureSkipVerify = d.insecure
+	tlsConfig.RootCAs = tlsConfig.RootCAs
 	return tlsConfig, nil
 }
 

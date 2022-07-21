@@ -76,6 +76,9 @@ const (
 	// ProtocolMySQLWithVerPrefix is TLS ALPN prefix used by tsh to carry
 	// MySQL server version.
 	ProtocolMySQLWithVerPrefix = Protocol(string(ProtocolMySQL) + "-")
+
+	// TODO better name
+	ProtocolHTTPTunnel Protocol = "teleport-http-tunnel"
 )
 
 // SupportedProtocols is the list of supported ALPN protocols.

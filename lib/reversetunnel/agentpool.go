@@ -19,6 +19,7 @@ package reversetunnel
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"io"
 	"net"
@@ -132,6 +133,8 @@ type AgentPoolConfig struct {
 	// LocalAuthAddresses is a list of auth servers to use when dialing back to
 	// the local cluster.
 	LocalAuthAddresses []string
+	//TODO
+	HTTPTunnelCAs *x509.CertPool
 }
 
 // CheckAndSetDefaults checks and sets defaults.
@@ -477,8 +480,8 @@ func (p *AgentPool) newAgent(ctx context.Context, tracker *track.Tracker, lease 
 		if v := os.Getenv("ALB_TEST_TUNNEL"); v != "" {
 			tlsConfig = &tls.Config{
 				NextProtos: []string{string(alpncommon.ProtocolReverseTunnel + "-http")},
+				RootCAs:    p.HTTPTunnelCAs,
 			}
-
 		}
 
 		if p.runtimeConfig.useReverseTunnelV2() {

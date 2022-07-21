@@ -379,7 +379,7 @@ func (p *Proxy) handleConn(ctx context.Context, clientConn net.Conn) error {
 		return trace.Wrap(handlerDesc.handle(ctx, conn, connInfo))
 	}
 
-	tlsConn := tls.Server(conn, p.getTLSConfig(handlerDesc))
+	tlsConn := tls.Server(conn, p.getTLSConfig(handlerDesc, hello.SupportedProtos))
 	if err := tlsConn.SetReadDeadline(p.cfg.Clock.Now().Add(p.cfg.ReadDeadline)); err != nil {
 		return trace.Wrap(err)
 	}
@@ -402,9 +402,14 @@ func (p *Proxy) handleConn(ctx context.Context, clientConn net.Conn) error {
 
 // getTLSConfig returns HandlerDesc.TLSConfig if custom TLS configuration was set for the handler
 // otherwise the ProxyConfig.WebTLSConfig is used.
-func (p *Proxy) getTLSConfig(desc *HandlerDecs) *tls.Config {
+func (p *Proxy) getTLSConfig(desc *HandlerDecs, protocols []string) *tls.Config {
 	if desc.TLSConfig != nil {
 		return desc.TLSConfig
+	}
+	for _, proto := range protocols {
+		if proto == string(common.ProtocolHTTPTunnel) {
+			return p.cfg.IdentityTLSConfig
+		}
 	}
 	return p.cfg.WebTLSConfig
 }

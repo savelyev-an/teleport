@@ -19,6 +19,7 @@ package reversetunnel
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -64,6 +65,8 @@ type TunnelAuthDialerConfig struct {
 	Log logrus.FieldLogger
 	// InsecureSkipTLSVerify is whether to skip certificate validation.
 	InsecureSkipTLSVerify bool
+	// TODO
+	HTTPTunnelCAs *x509.CertPool
 }
 
 func (c *TunnelAuthDialerConfig) CheckAndSetDefaults() error {
@@ -103,6 +106,7 @@ func (t *TunnelAuthDialer) DialContext(ctx context.Context, _, _ string) (net.Co
 		if v := os.Getenv("ALB_TEST_TUNNEL"); v != "" {
 			opts = append(opts, proxy.WithALPNDialer(&tls.Config{
 				NextProtos: []string{string("teleport-reversetunnel-http")},
+				RootCAs:    t.HTTPTunnelCAs,
 			}))
 		} else {
 			opts = append(opts, proxy.WithALPNDialer(&tls.Config{
