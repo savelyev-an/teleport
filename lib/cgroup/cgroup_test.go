@@ -44,9 +44,7 @@ func TestCreate(t *testing.T) {
 	}
 
 	// Create temporary directory where cgroup2 hierarchy will be mounted.
-	dir, err := os.MkdirTemp("", "cgroup-test")
-	require.NoError(t, err)
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	// Start cgroup service.
 	service, err := New(&Config{
@@ -61,30 +59,21 @@ func TestCreate(t *testing.T) {
 
 	// Make sure that it exists.
 	cgroupPath := path.Join(service.teleportRoot, sessionID)
-	_, err = os.Stat(cgroupPath)
-	if os.IsNotExist(err) {
-		t.Fatalf("Could not find cgroup file %v: %v.", cgroupPath, err)
-	}
+	require.DirExists(t, cgroupPath)
 
 	// Remove cgroup.
 	err = service.Remove(sessionID)
 	require.NoError(t, err)
 
 	// Make sure cgroup is gone.
-	_, err = os.Stat(cgroupPath)
-	if !os.IsNotExist(err) {
-		t.Fatalf("Failed to remove cgroup at %v: %v.", cgroupPath, err)
-	}
+	require.DirNotExists(t, cgroupPath)
 
 	// Close the cgroup service, this should unmound the cgroup filesystem.
 	err = service.Close()
 	require.NoError(t, err)
 
 	// Make sure the cgroup filesystem has been unmounted.
-	_, err = os.Stat(cgroupPath)
-	if !os.IsNotExist(err) {
-		t.Fatalf("Failed to unmound cgroup filesystem from %v: %v.", dir, err)
-	}
+	require.DirNotExists(t, cgroupPath)
 }
 
 // TestCleanup tests the ability for Teleport to remove and cleanup all
@@ -96,9 +85,7 @@ func TestCleanup(t *testing.T) {
 	}
 
 	// Create temporary directory where cgroup2 hierarchy will be mounted.
-	dir, err := os.MkdirTemp("", "cgroup-test")
-	require.NoError(t, err)
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	// Start cgroup service.
 	service, err := New(&Config{
@@ -118,10 +105,7 @@ func TestCleanup(t *testing.T) {
 
 	// Make sure the cgroup no longer exists.
 	cgroupPath := path.Join(service.teleportRoot, sessionID)
-	_, err = os.Stat(cgroupPath)
-	if os.IsNotExist(err) {
-		t.Fatalf("Could not find cgroup file %v: %v.", cgroupPath, err)
-	}
+	require.DirNotExists(t, cgroupPath)
 }
 
 // isRoot returns a boolean if the test is being run as root or not. Tests
