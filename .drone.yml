@@ -30,7 +30,7 @@ steps:
 ################################################
 # Generated using dronegen, do not edit by hand!
 # Use 'make dronegen' to update.
-# Generated at dronegen/push.go:104
+# Generated at dronegen/push.go:105
 ################################################
 
 kind: pipeline
@@ -133,7 +133,7 @@ volumes:
 ################################################
 # Generated using dronegen, do not edit by hand!
 # Use 'make dronegen' to update.
-# Generated at dronegen/push.go:104
+# Generated at dronegen/push.go:105
 ################################################
 
 kind: pipeline
@@ -236,7 +236,7 @@ volumes:
 ################################################
 # Generated using dronegen, do not edit by hand!
 # Use 'make dronegen' to update.
-# Generated at dronegen/push.go:104
+# Generated at dronegen/push.go:105
 ################################################
 
 kind: pipeline
@@ -343,7 +343,7 @@ volumes:
 ################################################
 # Generated using dronegen, do not edit by hand!
 # Use 'make dronegen' to update.
-# Generated at dronegen/push.go:104
+# Generated at dronegen/push.go:105
 ################################################
 
 kind: pipeline
@@ -626,7 +626,54 @@ steps:
 ################################################
 # Generated using dronegen, do not edit by hand!
 # Use 'make dronegen' to update.
-# Generated at dronegen/push.go:104
+# Generated at dronegen/windows.go:20
+################################################
+
+kind: pipeline
+type: exec
+name: push-build-native-windows-amd64
+trigger:
+  event:
+    include:
+    - push
+    exclude:
+    - pull_request
+  repo:
+    include:
+    - gravitational/*
+  branch:
+    include:
+    - master
+    - branch/*
+    - tcsc/build-windows*
+workspace:
+  path: C:/Drone/Workspace/push-build-native-windows-amd64
+platform:
+  os: windows
+  arch: amd64
+clone:
+  disable: true
+concurrency:
+  limit: 1
+steps:
+- name: Check out code
+  commands:
+  - $ErrorActionPreference = 'Stop'
+  - $TeleportSrc = "$Env:WORKSPACE_DIR/go/src/github.com/gravitational/teleport"
+  - New-Item -Path "$TeleportSrc" -ItemType Directory | Out-Null
+  - cd $TeleportSrc
+  - git clone https://github.com/gravitational/${DRONE_REPO_NAME}.git .
+  - git checkout ${DRONE_TAG:-$DRONE_COMMIT}
+  environment:
+    GITHUB_PRIVATE_KEY:
+      from_secret: GITHUB_PRIVATE_KEY
+    WORKSPACE_DIR: C:/Drone/Workspace/push-build-native-windows-amd64
+
+---
+################################################
+# Generated using dronegen, do not edit by hand!
+# Use 'make dronegen' to update.
+# Generated at dronegen/push.go:105
 ################################################
 
 kind: pipeline
@@ -729,7 +776,7 @@ volumes:
 ################################################
 # Generated using dronegen, do not edit by hand!
 # Use 'make dronegen' to update.
-# Generated at dronegen/push.go:104
+# Generated at dronegen/push.go:105
 ################################################
 
 kind: pipeline
@@ -5617,8 +5664,3 @@ volumes:
   - name: debrepo
     claim:
       name: drone-s3-debrepo-pvc
----
-kind: signature
-hmac: 367ad79b1217c151362b7ac0c86e00cd882df46a1dad13411135a1dc1f04381e
-
-...
