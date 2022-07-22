@@ -216,6 +216,13 @@ func (s *Service) cleanupHierarchy() error {
 			return nil
 		}
 
+		// Only attempt to cleanup cgroups that were created by this instance
+		// of Teleport. This ensures that during graceful restart, we don't
+		// trample over cgroups for other instances of Teleport.
+		if !strings.HasPrefix(path, filepath.Clean(s.teleportRoot)) {
+			return nil
+		}
+
 		// Trim the path at which the cgroup hierarchy is mounted. This will
 		// remove the UUID used in the mount path for this cgroup hierarchy.
 		cleanpath := strings.TrimPrefix(path, filepath.Clean(s.teleportRoot))

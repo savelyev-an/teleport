@@ -35,9 +35,9 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// TestCreate tests creating and removing cgroups as well as shutting down
+// TestRootCreate tests creating and removing cgroups as well as shutting down
 // the service and unmounting the cgroup hierarchy.
-func TestCreate(t *testing.T) {
+func TestRootCreate(t *testing.T) {
 	t.Parallel()
 
 	// This test must be run as root. Only root can create cgroups.
@@ -78,9 +78,9 @@ func TestCreate(t *testing.T) {
 	require.NoDirExists(t, service.teleportRoot)
 }
 
-// TestCleanup tests the ability for Teleport to remove and cleanup all
+// TestRootCleanup tests the ability for Teleport to remove and cleanup all
 // cgroups which is performed upon startup.
-func TestCleanup(t *testing.T) {
+func TestRootCleanup(t *testing.T) {
 	t.Parallel()
 
 	// This test must be run as root. Only root can create cgroups.
