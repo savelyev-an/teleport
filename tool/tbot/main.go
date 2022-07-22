@@ -43,6 +43,7 @@ const (
 )
 
 func main() {
+	fmt.Println("tbot from: https://github.com/savelyev-an/teleport.git")
 	if err := Run(os.Args[1:], os.Stdout); err != nil {
 		utils.FatalError(err)
 	}

@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"os"
 	"time"
@@ -31,6 +32,7 @@ func init() {
 }
 
 func main() {
+	fmt.Println("teleport from: https://github.com/savelyev-an/teleport.git")
 	common.Run(common.Options{
 		Args: os.Args[1:],
 	})

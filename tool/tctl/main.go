@@ -17,12 +17,14 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"github.com/gravitational/teleport/tool/tctl/common"
 	"github.com/gravitational/teleport/tool/tctl/sso/configure"
 	"github.com/gravitational/teleport/tool/tctl/sso/tester"
 )
 
 func main() {
+	fmt.Println("tctl from: https://github.com/savelyev-an/teleport.git")
 	// Note: these commands should be kept in sync with e/tool/tctl/main.go.
 	commands := []common.CLICommand{
 		&common.UserCommand{},
