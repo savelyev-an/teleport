@@ -97,6 +97,7 @@ import (
 	"github.com/gravitational/teleport/lib/system"
 	"github.com/gravitational/teleport/lib/utils"
 	"github.com/gravitational/teleport/lib/web"
+	"k8s.io/utils/strings/slices"
 
 	"github.com/google/uuid"
 	"github.com/gravitational/roundtrip"
@@ -3964,6 +3965,32 @@ func (process *TeleportProcess) setupProxyTLSConfig(conn *Connector, tsrv revers
 	return tlsConfig, nil
 }
 
+// TODO
+type waitCloseConn struct {
+	net.Conn
+	ctx    context.Context
+	cancel context.CancelFunc
+}
+
+func newWaitCloseConn(ctx context.Context, conn net.Conn) *waitCloseConn {
+	ctx, cancel := context.WithCancel(ctx)
+	return &waitCloseConn{
+		Conn:   conn,
+		ctx:    ctx,
+		cancel: cancel,
+	}
+}
+
+func (c *waitCloseConn) Close() (err error) {
+	err = c.Conn.Close()
+	c.cancel()
+	return
+}
+
+func (c *waitCloseConn) Wait() {
+	<-c.ctx.Done()
+}
+
 func setupALPNRouter(listeners *proxyListeners, serverTLSConf *tls.Config, cfg *Config) *alpnproxy.Router {
 	if listeners.web == nil || cfg.Proxy.DisableTLS || cfg.Proxy.DisableALPNSNIListener {
 		return nil
@@ -3995,7 +4022,19 @@ func setupALPNRouter(listeners *proxyListeners, serverTLSConf *tls.Config, cfg *
 				alpncommon.ProtocolHTTP2,
 				acme.ALPNProto,
 			),
-			Handler:    webWrapper.HandleConnection,
+			HandlerWithConnInfo: func(ctx context.Context, conn net.Conn, info alpnproxy.ConnectionInfo) error {
+				logrus.Infof("-->> %v HTTP conn start %v", time.Now(), info)
+				defer logrus.Infof("-->> %v HTTP conn end", time.Now())
+
+				if slices.Contains(info.ALPN, "teleport-http-in-http") {
+					connWrapper := newWaitCloseConn(ctx, conn)
+					defer connWrapper.Wait()
+
+					conn = connWrapper
+				}
+
+				return trace.Wrap(webWrapper.HandleConnection(ctx, conn))
+			},
 			ForwardTLS: false,
 		})
 		listeners.web = webWrapper

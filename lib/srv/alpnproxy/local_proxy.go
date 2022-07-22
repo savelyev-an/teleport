@@ -25,6 +25,8 @@ import (
 	"net/http/httputil"
 	"os"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/gravitational/trace"
 	log "github.com/sirupsen/logrus"
@@ -209,8 +211,13 @@ func (l *LocalProxy) handleDownstreamConnection2(ctx context.Context, downstream
 		return trace.Wrap(err)
 	}
 
+	protocols := l.cfg.GetProtocols()
+	if slices.Contains(protocols, string(common.ProtocolHTTP)) {
+		protocols = append(protocols, "teleport-http-in-http")
+	}
+
 	upstreamConn := tls.Client(httpConn, &tls.Config{
-		NextProtos:         l.cfg.GetProtocols(),
+		NextProtos:         protocols,
 		InsecureSkipVerify: l.cfg.InsecureSkipVerify,
 		ServerName:         serverName,
 		Certificates:       l.cfg.Certs,

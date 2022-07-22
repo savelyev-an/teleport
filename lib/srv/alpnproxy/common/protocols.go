@@ -93,6 +93,7 @@ var SupportedProtocols = []Protocol{
 	ProtocolAuth,
 	"teleport-proxy-ssh-http",
 	"teleport-reversetunnel-http",
+	"teleport-http-in-http",
 }
 
 // ProtocolsToString converts the list of Protocols to the list of strings.
