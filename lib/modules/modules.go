@@ -162,6 +162,8 @@ func (p *defaultModules) Features() Features {
 		Desktop:           true,
 		MachineID:         true,
 		ModeratedSessions: false, // moderated sessions is supported in enterprise only
+		SAML:              true,  // fork: turn on
+		OIDC:              true,  // fork: turn on
 	}
 }
 
