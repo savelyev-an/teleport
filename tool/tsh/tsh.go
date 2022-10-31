@@ -377,7 +377,6 @@ func (e *exitCodeError) Error() string {
 }
 
 func main() {
-	fmt.Println("tsh from: https://github.com/savelyev-an/teleport.git")
 	cmdLineOrig := os.Args[1:]
 	var cmdLine []string
 
